@@ -24,13 +24,14 @@ package jp.mintjams.tools.lang;
 
 import java.time.ZoneId;
 
-public interface ValueAdapter<ValueType> {
+public interface AdaptableValue<ValueType> {
 
-	static final String ENV_ENCODING = "file.encoding";
-	static final String ENV_ZONEID = ZoneId.class.getName();
+	AdaptableValue<ValueType> setProperty(String key, Object value);
 
-	ValueType adapt(Object value);
+	AdaptableValue<ValueType> setEncoding(String encoding);
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	AdaptableValue<ValueType> setZoneId(ZoneId zoneId);
+
+	ValueType getValue();
 
 }

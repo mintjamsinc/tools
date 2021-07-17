@@ -22,15 +22,41 @@
 
 package jp.mintjams.tools.lang;
 
-import java.time.ZoneId;
+import java.math.BigDecimal;
+import java.util.Map;
 
-public interface ValueAdapter<ValueType> {
+public class BigDecimalValueAdapter extends AbstractValueAdapter<BigDecimal> {
 
-	static final String ENV_ENCODING = "file.encoding";
-	static final String ENV_ZONEID = ZoneId.class.getName();
+	public BigDecimalValueAdapter() {
+		super();
+	}
 
-	ValueType adapt(Object value);
+	public BigDecimalValueAdapter(Map<String, Object> env) {
+		super(env);
+	}
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	@Override
+	public BigDecimal adapt(Object value) {
+		if (value == null) {
+			return null;
+		}
+
+		BigDecimal bigDecimalValue = Adaptables.getAdapter(value, BigDecimal.class);
+		if (bigDecimalValue != null) {
+			return bigDecimalValue;
+		}
+
+		Number numberValue = Adaptables.getAdapter(value, Number.class);
+		if (numberValue != null) {
+			return BigDecimal.valueOf(numberValue.doubleValue());
+		}
+
+		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		if (stringValue != null) {
+			return new BigDecimal(stringValue);
+		}
+
+		return null;
+	}
 
 }

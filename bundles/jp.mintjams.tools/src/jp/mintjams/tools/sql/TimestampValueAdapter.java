@@ -20,17 +20,34 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.lang;
+package jp.mintjams.tools.sql;
 
-import java.time.ZoneId;
+import java.util.Map;
 
-public interface ValueAdapter<ValueType> {
+import jp.mintjams.tools.lang.AbstractValueAdapter;
 
-	static final String ENV_ENCODING = "file.encoding";
-	static final String ENV_ZONEID = ZoneId.class.getName();
+public class TimestampValueAdapter extends AbstractValueAdapter<java.sql.Timestamp> {
 
-	ValueType adapt(Object value);
+	public TimestampValueAdapter() {
+		super();
+	}
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	public TimestampValueAdapter(Map<String, Object> env) {
+		super(env);
+	}
+
+	@Override
+	public java.sql.Timestamp adapt(Object value) {
+		if (value == null) {
+			return null;
+		}
+
+		java.util.Date dateValue = new jp.mintjams.tools.lang.DateValueAdapter(fEnv).adapt(value);
+		if (dateValue != null) {
+			return new java.sql.Timestamp(dateValue.getTime());
+		}
+
+		return null;
+	}
 
 }

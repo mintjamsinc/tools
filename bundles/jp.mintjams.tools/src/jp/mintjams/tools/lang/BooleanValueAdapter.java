@@ -22,15 +22,35 @@
 
 package jp.mintjams.tools.lang;
 
-import java.time.ZoneId;
+import java.util.Map;
 
-public interface ValueAdapter<ValueType> {
+public class BooleanValueAdapter extends AbstractValueAdapter<Boolean> {
 
-	static final String ENV_ENCODING = "file.encoding";
-	static final String ENV_ZONEID = ZoneId.class.getName();
+	public BooleanValueAdapter() {
+		super();
+	}
 
-	ValueType adapt(Object value);
+	public BooleanValueAdapter(Map<String, Object> env) {
+		super(env);
+	}
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	@Override
+	public Boolean adapt(Object value) {
+		if (value == null) {
+			return null;
+		}
+
+		Boolean booleanValue = Adaptables.getAdapter(value, Boolean.class);
+		if (booleanValue != null) {
+			return booleanValue;
+		}
+
+		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		if (stringValue != null) {
+			return Boolean.valueOf(stringValue);
+		}
+
+		return null;
+	}
 
 }

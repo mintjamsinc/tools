@@ -22,15 +22,8 @@
 
 package jp.mintjams.tools.lang;
 
-import java.time.ZoneId;
+public interface Adaptable {
 
-public interface ValueAdapter<ValueType> {
-
-	static final String ENV_ENCODING = "file.encoding";
-	static final String ENV_ZONEID = ZoneId.class.getName();
-
-	ValueType adapt(Object value);
-
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	<AdapterType> AdapterType adaptTo(Class<AdapterType> adapterType);
 
 }

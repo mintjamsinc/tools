@@ -22,15 +22,35 @@
 
 package jp.mintjams.tools.lang;
 
-import java.time.ZoneId;
+import java.util.Map;
 
-public interface ValueAdapter<ValueType> {
+public class CharacterValueAdapter extends AbstractValueAdapter<Character> {
 
-	static final String ENV_ENCODING = "file.encoding";
-	static final String ENV_ZONEID = ZoneId.class.getName();
+	public CharacterValueAdapter() {
+		super();
+	}
 
-	ValueType adapt(Object value);
+	public CharacterValueAdapter(Map<String, Object> env) {
+		super(env);
+	}
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	@Override
+	public Character adapt(Object value) {
+		if (value == null) {
+			return null;
+		}
+
+		Character characterValue = Adaptables.getAdapter(value, Character.class);
+		if (characterValue != null) {
+			return characterValue;
+		}
+
+		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		if (stringValue != null && stringValue.length() > 0) {
+			return stringValue.toCharArray()[0];
+		}
+
+		return null;
+	}
 
 }
