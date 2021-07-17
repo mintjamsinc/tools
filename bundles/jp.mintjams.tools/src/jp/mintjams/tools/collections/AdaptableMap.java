@@ -47,19 +47,18 @@ import jp.mintjams.tools.lang.LongValueAdapter;
 import jp.mintjams.tools.lang.ReaderValueAdapter;
 import jp.mintjams.tools.lang.ShortValueAdapter;
 import jp.mintjams.tools.lang.StringValueAdapter;
+import jp.mintjams.tools.lang.ValueAdapter;
 import jp.mintjams.tools.sql.TimeValueAdapter;
 import jp.mintjams.tools.sql.TimestampValueAdapter;
 
 public class AdaptableMap<K, V> implements Map<K, V> {
 
 	private final Map<K, V> fMap;
+	private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap;
 
-	public AdaptableMap() {
-		this(new HashMap<K, V>());
-	}
-
-	public AdaptableMap(Map<K, V> map) {
-		fMap = map;
+	private AdaptableMap(Builder<K, V> builder) {
+		fMap = builder.fMap;
+		fValueAdapterMap = builder.fValueAdapterMap;
 	}
 
 	@Override
@@ -129,79 +128,63 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 
 	@SuppressWarnings("unchecked")
 	public <ValueType> AdaptableValue<ValueType> getAdaptableValue(Object key, Class<ValueType> valueType, HashMap<String, Object> env) {
-		if (env == null) {
-			env = new HashMap<>();
-		}
-
-		if (BigDecimal.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new BigDecimalValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (BigInteger.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new BigIntegerValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Boolean.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new BooleanValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Byte.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new ByteValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Character.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new CharacterValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (java.util.Date.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new jp.mintjams.tools.lang.DateValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Double.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new DoubleValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Float.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new FloatValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (InputStream.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new InputStreamValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Integer.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new IntegerValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Long.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new LongValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Reader.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new ReaderValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Short.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new ShortValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (String.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new StringValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (java.sql.Date.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new jp.mintjams.tools.sql.DateValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Timestamp.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new TimestampValueAdapter(env).getAdaptableValue(get(key));
-		}
-
-		if (Time.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new TimeValueAdapter(env).getAdaptableValue(get(key));
+		Class<? extends ValueAdapter<?>> valueAdapterType = fValueAdapterMap.get(valueType);
+		if (valueAdapterType != null) {
+			if (env == null) {
+				env = new HashMap<>();
+			}
+			try {
+				return (AdaptableValue<ValueType>) valueAdapterType.getConstructor(Map.class).newInstance(env).getAdaptableValue(get(key));
+			} catch (Throwable ignore) {}
 		}
 
 		return null;
+	}
+
+	public static <K, V> Builder<K, V> newBuilder() {
+		return new Builder<>();
+	}
+
+	public static class Builder<K, V> {
+		private Map<K, V> fMap;
+		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap = new HashMap<>();
+
+		private Builder() {
+			fValueAdapterMap.put(BigDecimal.class, BigDecimalValueAdapter.class);
+			fValueAdapterMap.put(BigInteger.class, BigIntegerValueAdapter.class);
+			fValueAdapterMap.put(Boolean.class, BooleanValueAdapter.class);
+			fValueAdapterMap.put(Byte.class, ByteValueAdapter.class);
+			fValueAdapterMap.put(Character.class, CharacterValueAdapter.class);
+			fValueAdapterMap.put(java.util.Date.class, jp.mintjams.tools.lang.DateValueAdapter.class);
+			fValueAdapterMap.put(Double.class, DoubleValueAdapter.class);
+			fValueAdapterMap.put(Float.class, FloatValueAdapter.class);
+			fValueAdapterMap.put(InputStream.class, InputStreamValueAdapter.class);
+			fValueAdapterMap.put(Integer.class, IntegerValueAdapter.class);
+			fValueAdapterMap.put(Long.class, LongValueAdapter.class);
+			fValueAdapterMap.put(Reader.class, ReaderValueAdapter.class);
+			fValueAdapterMap.put(Short.class, ShortValueAdapter.class);
+			fValueAdapterMap.put(String.class, StringValueAdapter.class);
+			fValueAdapterMap.put(java.sql.Date.class, jp.mintjams.tools.sql.DateValueAdapter.class);
+			fValueAdapterMap.put(Timestamp.class, TimestampValueAdapter.class);
+			fValueAdapterMap.put(Time.class, TimeValueAdapter.class);
+		}
+
+		public <ValueType> Builder<K, V> setValueAdapter(Class<ValueType> valueType, Class<ValueAdapter<ValueType>> valueAdapterType) {
+			fValueAdapterMap.put(valueType, valueAdapterType);
+			return this;
+		}
+
+		public Builder<K, V> setMap(Map<K, V> map) {
+			fMap = map;
+			return this;
+		}
+
+		public AdaptableMap<K, V> build() {
+			if (fMap == null) {
+				fMap = new HashMap<>();
+			}
+			return new AdaptableMap<>(this);
+		}
 	}
 
 }

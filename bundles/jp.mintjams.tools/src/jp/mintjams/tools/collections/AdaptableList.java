@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 
 import jp.mintjams.tools.lang.AdaptableValue;
 import jp.mintjams.tools.lang.BigDecimalValueAdapter;
@@ -49,19 +50,18 @@ import jp.mintjams.tools.lang.LongValueAdapter;
 import jp.mintjams.tools.lang.ReaderValueAdapter;
 import jp.mintjams.tools.lang.ShortValueAdapter;
 import jp.mintjams.tools.lang.StringValueAdapter;
+import jp.mintjams.tools.lang.ValueAdapter;
 import jp.mintjams.tools.sql.TimeValueAdapter;
 import jp.mintjams.tools.sql.TimestampValueAdapter;
 
 public class AdaptableList<E> implements List<E> {
 
 	private final List<E> fList;
+	private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap;
 
-	public AdaptableList() {
-		this(new ArrayList<>());
-	}
-
-	public AdaptableList(List<E> list) {
-		fList = list;
+	public AdaptableList(Builder<E> builder) {
+		fList = builder.fList;
+		fValueAdapterMap = builder.fValueAdapterMap;
 	}
 
 	@Override
@@ -196,79 +196,63 @@ public class AdaptableList<E> implements List<E> {
 
 	@SuppressWarnings("unchecked")
 	public <ValueType> AdaptableValue<ValueType> getAdaptableValue(int index, Class<ValueType> valueType, HashMap<String, Object> env) {
-		if (env == null) {
-			env = new HashMap<>();
-		}
-
-		if (BigDecimal.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new BigDecimalValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (BigInteger.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new BigIntegerValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Boolean.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new BooleanValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Byte.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new ByteValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Character.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new CharacterValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (java.util.Date.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new jp.mintjams.tools.lang.DateValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Double.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new DoubleValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Float.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new FloatValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (InputStream.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new InputStreamValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Integer.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new IntegerValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Long.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new LongValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Reader.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new ReaderValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Short.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new ShortValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (String.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new StringValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (java.sql.Date.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new jp.mintjams.tools.sql.DateValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Timestamp.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new TimestampValueAdapter(env).getAdaptableValue(get(index));
-		}
-
-		if (Time.class.equals(valueType)) {
-			return (AdaptableValue<ValueType>) new TimeValueAdapter(env).getAdaptableValue(get(index));
+		Class<? extends ValueAdapter<?>> valueAdapterType = fValueAdapterMap.get(valueType);
+		if (valueAdapterType != null) {
+			if (env == null) {
+				env = new HashMap<>();
+			}
+			try {
+				return (AdaptableValue<ValueType>) valueAdapterType.getConstructor(Map.class).newInstance(env).getAdaptableValue(get(index));
+			} catch (Throwable ignore) {}
 		}
 
 		return null;
+	}
+
+	public static <E> Builder<E> newBuilder() {
+		return new Builder<>();
+	}
+
+	public static class Builder<E> {
+		private List<E> fList;
+		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap = new HashMap<>();
+
+		private Builder() {
+			fValueAdapterMap.put(BigDecimal.class, BigDecimalValueAdapter.class);
+			fValueAdapterMap.put(BigInteger.class, BigIntegerValueAdapter.class);
+			fValueAdapterMap.put(Boolean.class, BooleanValueAdapter.class);
+			fValueAdapterMap.put(Byte.class, ByteValueAdapter.class);
+			fValueAdapterMap.put(Character.class, CharacterValueAdapter.class);
+			fValueAdapterMap.put(java.util.Date.class, jp.mintjams.tools.lang.DateValueAdapter.class);
+			fValueAdapterMap.put(Double.class, DoubleValueAdapter.class);
+			fValueAdapterMap.put(Float.class, FloatValueAdapter.class);
+			fValueAdapterMap.put(InputStream.class, InputStreamValueAdapter.class);
+			fValueAdapterMap.put(Integer.class, IntegerValueAdapter.class);
+			fValueAdapterMap.put(Long.class, LongValueAdapter.class);
+			fValueAdapterMap.put(Reader.class, ReaderValueAdapter.class);
+			fValueAdapterMap.put(Short.class, ShortValueAdapter.class);
+			fValueAdapterMap.put(String.class, StringValueAdapter.class);
+			fValueAdapterMap.put(java.sql.Date.class, jp.mintjams.tools.sql.DateValueAdapter.class);
+			fValueAdapterMap.put(Timestamp.class, TimestampValueAdapter.class);
+			fValueAdapterMap.put(Time.class, TimeValueAdapter.class);
+		}
+
+		public <ValueType> Builder<E> setValueAdapter(Class<ValueType> valueType, Class<ValueAdapter<ValueType>> valueAdapterType) {
+			fValueAdapterMap.put(valueType, valueAdapterType);
+			return this;
+		}
+
+		public Builder<E> setMap(List<E> list) {
+			fList = list;
+			return this;
+		}
+
+		public AdaptableList<E> build() {
+			if (fList == null) {
+				fList = new ArrayList<>();
+			}
+			return new AdaptableList<>(this);
+		}
 	}
 
 }
