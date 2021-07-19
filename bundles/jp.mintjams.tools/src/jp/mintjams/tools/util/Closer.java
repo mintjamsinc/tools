@@ -36,6 +36,19 @@ public class Closer extends Vector<Closeable> implements Closeable {
 		return new Closer();
 	}
 
+	public synchronized boolean add(AutoCloseable e) {
+		return add(new Closeable() {
+			@Override
+			public void close() throws IOException {
+				try {
+					e.close();
+				} catch (Exception ex) {
+					throw (IOException) new IOException(ex.getMessage()).initCause(ex);
+				}
+			}
+		});
+	}
+
 	@Override
 	public synchronized void close() throws IOException {
 		while (!isEmpty()) {

@@ -153,7 +153,7 @@ public class Query implements Closeable {
 
 		private ResultSetIteratorImpl(ResultSet resultSet) throws SQLException {
 			fResultSet = resultSet;
-			fCloser.add(toCloseable(fResultSet));
+			fCloser.add(fResultSet);
 			fMetadata = resultSet.getMetaData();
 
 			try {
@@ -194,19 +194,6 @@ public class Query implements Closeable {
 			}
 
 			return result;
-		}
-
-		private Closeable toCloseable(ResultSet resultSet) {
-			return new Closeable() {
-				@Override
-				public void close() throws IOException {
-					try {
-						resultSet.close();
-					} catch (SQLException ex) {
-						throw (IOException) new IOException(ex.getMessage()).initCause(ex);
-					}
-				}
-			};
 		}
 
 		@Override

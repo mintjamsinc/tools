@@ -95,7 +95,7 @@ public class SQLStatement implements Closeable {
 		}
 
 		fPreparedStatement = fConnection.prepareStatement(fSQL.toString());
-		fCloser.add(toCloseable(fPreparedStatement));
+		fCloser.add(fPreparedStatement);
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -106,7 +106,7 @@ public class SQLStatement implements Closeable {
 		}
 
 		fPreparedStatement = fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency);
-		fCloser.add(toCloseable(fPreparedStatement));
+		fCloser.add(fPreparedStatement);
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -117,7 +117,7 @@ public class SQLStatement implements Closeable {
 		}
 
 		fPreparedStatement = fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability);
-		fCloser.add(toCloseable(fPreparedStatement));
+		fCloser.add(fPreparedStatement);
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -127,19 +127,6 @@ public class SQLStatement implements Closeable {
 		for (SQLVariable variable : fSQLVariableList) {
 			fParameterHandler.setParameter(new ParameterContextImpl(variable, preparedStatement, metadata));
 		}
-	}
-
-	private Closeable toCloseable(PreparedStatement preparedStatement) {
-		return new Closeable() {
-			@Override
-			public void close() throws IOException {
-				try {
-					preparedStatement.close();
-				} catch (SQLException ex) {
-					throw (IOException) new IOException(ex.getMessage()).initCause(ex);
-				}
-			}
-		};
 	}
 
 	@Override
