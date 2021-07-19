@@ -20,15 +20,11 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.lang;
+package jp.mintjams.tools.sql;
 
-public interface ValueAdapter<ValueType> {
+import java.io.Closeable;
+import java.util.Iterator;
 
-	static final String ENV_ENCODING = "encoding";
-	static final String ENV_ZONEID = "zoneId";
+import jp.mintjams.tools.collections.AdaptableMap;
 
-	ValueType adapt(Object value);
-
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
-
-}
+public interface ResultSetIterator extends Iterator<AdaptableMap<String, Object>>, Closeable {}

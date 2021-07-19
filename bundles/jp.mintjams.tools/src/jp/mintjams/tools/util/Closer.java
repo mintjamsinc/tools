@@ -20,15 +20,29 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.lang;
+package jp.mintjams.tools.util;
 
-public interface ValueAdapter<ValueType> {
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Vector;
 
-	static final String ENV_ENCODING = "encoding";
-	static final String ENV_ZONEID = "zoneId";
+public class Closer extends Vector<Closeable> implements Closeable {
 
-	ValueType adapt(Object value);
+	private static final long serialVersionUID = 1L;
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	private Closer() {}
+
+	public static Closer newCloser() {
+		return new Closer();
+	}
+
+	@Override
+	public synchronized void close() throws IOException {
+		while (!isEmpty()) {
+			try {
+				remove(size() - 1).close();
+			} catch (Throwable ignore) {}
+		}
+	}
 
 }

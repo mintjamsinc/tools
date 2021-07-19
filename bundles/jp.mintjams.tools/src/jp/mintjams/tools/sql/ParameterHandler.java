@@ -20,15 +20,27 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.lang;
+package jp.mintjams.tools.sql;
 
-public interface ValueAdapter<ValueType> {
+import java.io.Closeable;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Map;
 
-	static final String ENV_ENCODING = "encoding";
-	static final String ENV_ZONEID = "zoneId";
+public interface ParameterHandler {
 
-	ValueType adapt(Object value);
+	void setParameter(ParameterContext context) throws SQLException;
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	interface ParameterContext {
+		PreparedStatement getStatement();
+		ParameterMetaData getParameterMetaData();
+		int getIndex();
+		String getName();
+		Object getValue();
+		int getType();
+		Map<String, String> getOptions();
+		void addCloseable(Closeable closeable);
+	}
 
 }

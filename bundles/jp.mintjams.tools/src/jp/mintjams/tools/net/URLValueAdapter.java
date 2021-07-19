@@ -20,15 +20,45 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.lang;
+package jp.mintjams.tools.net;
 
-public interface ValueAdapter<ValueType> {
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Map;
 
-	static final String ENV_ENCODING = "encoding";
-	static final String ENV_ZONEID = "zoneId";
+import jp.mintjams.tools.lang.AbstractValueAdapter;
+import jp.mintjams.tools.lang.Adaptables;
+import jp.mintjams.tools.lang.StringValueAdapter;
 
-	ValueType adapt(Object value);
+public class URLValueAdapter extends AbstractValueAdapter<URL> {
 
-	AdaptableValue<ValueType> getAdaptableValue(Object value);
+	public URLValueAdapter() {
+		super();
+	}
+
+	public URLValueAdapter(Map<String, Object> env) {
+		super(env);
+	}
+
+	@Override
+	public URL adapt(Object value) {
+		if (value == null) {
+			return null;
+		}
+
+		URL urlValue = Adaptables.getAdapter(value, URL.class);
+		if (urlValue != null) {
+			return urlValue;
+		}
+
+		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		if (stringValue != null) {
+			try {
+				return new URL(stringValue);
+			} catch (MalformedURLException ignore) {}
+		}
+
+		return null;
+	}
 
 }

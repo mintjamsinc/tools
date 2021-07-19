@@ -22,6 +22,7 @@
 
 package jp.mintjams.tools.lang;
 
+import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,15 +40,27 @@ public abstract class AbstractValueAdapter<ValueType> implements ValueAdapter<Va
 	}
 
 	protected String getEncoding() {
-		String encoding = (String) fEnv.get(ENV_ENCODING);
+		String encoding = null;
+		Object o = fEnv.get(ENV_ENCODING);
+		if (o instanceof Charset) {
+			encoding = ((Charset) o).name();
+		} else if (o instanceof String) {
+			encoding = (String) o;
+		}
 		if (encoding == null) {
-			return System.getProperty("file.encoding");
+			return Charset.defaultCharset().name();
 		}
 		return encoding;
 	}
 
 	protected ZoneId getZoneId() {
-		ZoneId zoneId = (ZoneId) fEnv.get(ENV_ZONEID);
+		ZoneId zoneId = null;
+		Object o = fEnv.get(ENV_ZONEID);
+		if (o instanceof ZoneId) {
+			zoneId = (ZoneId) o;
+		} else if (o instanceof String) {
+			zoneId = ZoneId.of((String) o);
+		}
 		if (zoneId == null) {
 			return ZoneId.systemDefault();
 		}
