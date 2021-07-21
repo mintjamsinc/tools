@@ -192,7 +192,7 @@ public class Query implements Closeable {
 				} catch (SQLException ex) {
 					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 				}
-				AdaptableMap<String, Object> result = AdaptableMap.<String, Object>newBuilder().setMap(columns).build();
+				AdaptableMap<String, Object> result = AdaptableMap.<String, Object>newBuilder().putAll(columns).build();
 
 				try {
 					fHasNext = fResultSet.next();
