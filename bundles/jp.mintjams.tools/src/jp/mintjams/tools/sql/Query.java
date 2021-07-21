@@ -44,6 +44,8 @@ public class Query implements Closeable {
 	private ResultHandler fResultHandler;
 	private PreparedStatement fPreparedStatement;
 	private final Closer fCloser = Closer.newCloser();
+	private Integer fOffset;
+	private Integer fLimit;
 
 	public Query(Builder builder) throws SQLException {
 		fResultHandler = builder.fResultHandler;
@@ -66,6 +68,16 @@ public class Query implements Closeable {
 	@Override
 	public void close() throws IOException {
 		fCloser.close();
+	}
+
+	public Query setOffset(int offset) throws SQLException {
+		fOffset = offset;
+		return this;
+	}
+
+	public Query setLimit(int limit) throws SQLException {
+		fLimit = limit;
+		return this;
 	}
 
 	public Query closeOnCompletion() throws SQLException {
@@ -150,6 +162,7 @@ public class Query implements Closeable {
 		private final ResultSetMetaData fMetadata;
 		private final Closer fCloser = Closer.newCloser();
 		private boolean fHasNext;
+		private int fRows = 0;
 
 		private ResultSetIteratorImpl(ResultSet resultSet) throws SQLException {
 			fResultSet = resultSet;
@@ -157,7 +170,13 @@ public class Query implements Closeable {
 			fMetadata = resultSet.getMetaData();
 
 			try {
-				fHasNext = fResultSet.next();
+				int offset = (fOffset == null) ? 0 : fOffset;
+				for (int i = -1; i < offset; i++) {
+					fHasNext = fResultSet.next();
+					if (!fHasNext) {
+						break;
+					}
+				}
 			} catch (SQLException ex) {
 				throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 			}
@@ -191,6 +210,11 @@ public class Query implements Closeable {
 				fHasNext = fResultSet.next();
 			} catch (SQLException ex) {
 				throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+			}
+
+			fRows++;
+			if (fHasNext && (fLimit != null) && (fRows >= fLimit)) {
+				fHasNext = false;
 			}
 
 			return result;
