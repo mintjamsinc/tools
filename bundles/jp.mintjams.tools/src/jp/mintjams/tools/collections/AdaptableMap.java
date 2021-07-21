@@ -31,6 +31,7 @@ import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import jp.mintjams.tools.lang.AdaptableValue;
@@ -146,7 +147,7 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 	}
 
 	public static class Builder<K, V> {
-		private Map<K, V> fMap;
+		private final Map<K, V> fMap = new HashMap<>();
 		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap = new HashMap<>();
 
 		private Builder() {
@@ -174,15 +175,17 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 			return this;
 		}
 
-		public Builder<K, V> setMap(Map<K, V> map) {
-			fMap = map;
+		public Builder<K, V> putAll(Map<? extends K, ? extends V> m) {
+			fMap.putAll(m);
+			return this;
+		}
+
+		public Builder<K, V> put(K key, V value) {
+			fMap.put(key, value);
 			return this;
 		}
 
 		public AdaptableMap<K, V> build() {
-			if (fMap == null) {
-				fMap = new HashMap<>();
-			}
 			return new AdaptableMap<>(this);
 		}
 	}

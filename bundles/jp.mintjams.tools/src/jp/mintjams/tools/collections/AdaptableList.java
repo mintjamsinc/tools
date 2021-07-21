@@ -214,7 +214,7 @@ public class AdaptableList<E> implements List<E> {
 	}
 
 	public static class Builder<E> {
-		private List<E> fList;
+		private final List<E> fList = new ArrayList<>();
 		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap = new HashMap<>();
 
 		private Builder() {
@@ -242,15 +242,17 @@ public class AdaptableList<E> implements List<E> {
 			return this;
 		}
 
-		public Builder<E> setMap(List<E> list) {
-			fList = list;
+		public Builder<E> addAll(Collection<? extends E> c) {
+			fList.addAll(c);
+			return this;
+		}
+
+		public Builder<E> add(E e) {
+			fList.add(e);
 			return this;
 		}
 
 		public AdaptableList<E> build() {
-			if (fList == null) {
-				fList = new ArrayList<>();
-			}
 			return new AdaptableList<>(this);
 		}
 	}

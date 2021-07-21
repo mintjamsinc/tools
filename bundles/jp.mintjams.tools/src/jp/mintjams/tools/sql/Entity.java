@@ -264,14 +264,12 @@ public class Entity {
 				.build();
 	}
 
-	public Update updateByPrimaryKey(Map<String, Object> valuesAndConditions) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(valuesAndConditions);
+	public Update updateByPrimaryKey(Map<String, Object> values, Map<String, Object> conditions) throws SQLException {
+		Map<String, Object> variables = toLowerCaseKey(values);
+		Map<String, Object> cnds = toLowerCaseKey(conditions);
 
 		List<String> updateNameList = new ArrayList<>();
 		for (ColumnInfo info : fColumnList) {
-			if (fPrimaryKeyMap.containsKey(info.getName().toLowerCase())) {
-				continue;
-			}
 			if (variables.containsKey(info.getName().toLowerCase())) {
 				updateNameList.add(info.getName());
 			}
@@ -288,15 +286,21 @@ public class Entity {
 			sql.append(updateNameList.get(i)).append(" = ");
 			sql.append("{{").append(updateNameList.get(i).toLowerCase()).append("}}");
 		}
-		for (int i = 0; i < fPrimaryKeyList.size(); i++) {
-			ColumnInfo info = fPrimaryKeyList.get(i);
+		int i = 0;
+		for (ColumnInfo info : fPrimaryKeyList) {
+			if (!cnds.containsKey(info.getName().toLowerCase())) {
+				continue;
+			}
+
 			if (i == 0) {
 				sql.append(" WHERE ");
 			} else {
 				sql.append(" AND ");
 			}
 			sql.append(info.getName()).append(" = ");
-			sql.append("{{").append(info.getName().toLowerCase()).append("}}");
+			sql.append("{{__condition__").append(info.getName().toLowerCase()).append("}}");
+			variables.put("__condition__" + info.getName().toLowerCase(), cnds.get(info.getName().toLowerCase()));
+			i++;
 		}
 
 		return Update.newBuilder()
