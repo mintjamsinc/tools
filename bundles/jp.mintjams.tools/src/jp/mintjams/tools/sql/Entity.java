@@ -419,16 +419,6 @@ public class Entity {
 			return this;
 		}
 
-		private final Map<String, Object> fVariables = new HashMap<>();
-		public Builder setVariables(Map<String, Object> variables) {
-			fVariables.putAll(variables);
-			return this;
-		}
-		public Builder setVariable(String key, Object value) {
-			fVariables.put(key, value);
-			return this;
-		}
-
 		private Connection fConnection;
 		public Builder setConnection(Connection connection) {
 			fConnection = connection;
