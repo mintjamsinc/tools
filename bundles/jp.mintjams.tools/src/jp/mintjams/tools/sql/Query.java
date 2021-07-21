@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -105,8 +106,10 @@ public class Query implements Closeable {
 		return this;
 	}
 
-	public ResultSetIterator execute() throws SQLException {
-		return new ResultSetIteratorImpl(fPreparedStatement.executeQuery());
+	public Result execute() throws SQLException {
+		ResultSetIteratorImpl resultSetIterator = new ResultSetIteratorImpl(fPreparedStatement.executeQuery());
+		fCloser.add(resultSetIterator);
+		return resultSetIterator;
 	}
 
 	public static Builder newBuilder() {
@@ -157,12 +160,54 @@ public class Query implements Closeable {
 		}
 	}
 
-	private class ResultSetIteratorImpl implements ResultSetIterator {
+	public interface Result extends Iterable<AdaptableMap<String, Object>>, Closeable {}
+
+	private class ResultSetIteratorImpl implements Result {
 		private final ResultSet fResultSet;
 		private final ResultSetMetaData fMetadata;
 		private final Closer fCloser = Closer.newCloser();
 		private boolean fHasNext;
 		private int fRows = 0;
+
+		private Iterator<AdaptableMap<String, Object>> fIterator = new Iterator<AdaptableMap<String,Object>>() {
+			@Override
+			public boolean hasNext() {
+				return fHasNext;
+			}
+
+			@Override
+			public AdaptableMap<String, Object> next() {
+				if (!fHasNext) {
+					throw new NoSuchElementException("No more query results available.");
+				}
+
+				ResultHandler handler = fResultHandler;
+				if (handler == null) {
+					handler = new DefaultResultHandler();
+				}
+
+				Map<String, Object> columns;
+				try {
+					columns = handler.getResultAsMap(new ResultContextImpl());
+				} catch (SQLException ex) {
+					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+				}
+				AdaptableMap<String, Object> result = AdaptableMap.<String, Object>newBuilder().setMap(columns).build();
+
+				try {
+					fHasNext = fResultSet.next();
+				} catch (SQLException ex) {
+					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+				}
+
+				fRows++;
+				if (fHasNext && (fLimit != null) && (fRows >= fLimit)) {
+					fHasNext = false;
+				}
+
+				return result;
+			}
+		};
 
 		private ResultSetIteratorImpl(ResultSet resultSet) throws SQLException {
 			fResultSet = resultSet;
@@ -183,41 +228,8 @@ public class Query implements Closeable {
 		}
 
 		@Override
-		public boolean hasNext() {
-			return fHasNext;
-		}
-
-		@Override
-		public AdaptableMap<String, Object> next() {
-			if (!fHasNext) {
-				throw new NoSuchElementException("No more query results available.");
-			}
-
-			ResultHandler handler = fResultHandler;
-			if (handler == null) {
-				handler = new DefaultResultHandler();
-			}
-
-			Map<String, Object> columns;
-			try {
-				columns = handler.getResultAsMap(new ResultContextImpl());
-			} catch (SQLException ex) {
-				throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
-			}
-			AdaptableMap<String, Object> result = AdaptableMap.<String, Object>newBuilder().setMap(columns).build();
-
-			try {
-				fHasNext = fResultSet.next();
-			} catch (SQLException ex) {
-				throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
-			}
-
-			fRows++;
-			if (fHasNext && (fLimit != null) && (fRows >= fLimit)) {
-				fHasNext = false;
-			}
-
-			return result;
+		public Iterator<AdaptableMap<String, Object>> iterator() {
+			return fIterator;
 		}
 
 		@Override
