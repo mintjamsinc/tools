@@ -37,14 +37,16 @@ import java.util.Objects;
 
 public class Entity {
 
-	private ParameterHandler fParameterHandler;
-	private ResultHandler fResultHandler;
+	private final Connection fConnection;
+	private final ParameterHandler fParameterHandler;
+	private final ResultHandler fResultHandler;
 	private final String fTableName;
 	private final List<ColumnInfo> fColumnList = new ArrayList<>();
 	private final List<ColumnInfo> fPrimaryKeyList = new ArrayList<>();
 	private final Map<String, Integer> fPrimaryKeyMap = new HashMap<>();
 
 	public Entity(Builder builder) throws SQLException {
+		fConnection = builder.fConnection;
 		fParameterHandler = builder.fParameterHandler;
 		fResultHandler = builder.fResultHandler;
 
@@ -189,6 +191,7 @@ public class Entity {
 		return Query.newBuilder()
 				.setStatement(sql.toString())
 				.setVariables(variables)
+				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.setResultHandler(fResultHandler)
 				.build();
@@ -217,6 +220,7 @@ public class Entity {
 		return Query.newBuilder()
 				.setStatement(sql.toString())
 				.setVariables(toLowerCaseKey(variables))
+				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.setResultHandler(fResultHandler)
 				.build();
@@ -255,6 +259,7 @@ public class Entity {
 		return Update.newBuilder()
 				.setStatement(sql.toString())
 				.setVariables(toLowerCaseKey(variables))
+				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -297,6 +302,7 @@ public class Entity {
 		return Update.newBuilder()
 				.setStatement(sql.toString())
 				.setVariables(toLowerCaseKey(variables))
+				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -343,6 +349,7 @@ public class Entity {
 		return Update.newBuilder()
 				.setStatement(sql.toString())
 				.setVariables(toLowerCaseKey(variables))
+				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -366,6 +373,7 @@ public class Entity {
 		return Update.newBuilder()
 				.setStatement(sql.toString())
 				.setVariables(toLowerCaseKey(variables))
+				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -394,6 +402,7 @@ public class Entity {
 		return Update.newBuilder()
 				.setStatement(sql.toString())
 				.setVariables(toLowerCaseKey(variables))
+				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -414,7 +423,7 @@ public class Entity {
 		private Builder() {}
 
 		private String fName;
-		public Builder setStatement(String name) {
+		public Builder setName(String name) {
 			fName = name;
 			return this;
 		}
