@@ -10,4 +10,5 @@ Export-Package: jp.mintjams.tools.collections;version="1.0.0",
  jp.mintjams.tools.lang;version="1.0.0",
  jp.mintjams.tools.net;version="1.0.0",
  jp.mintjams.tools.sql;version="1.0.0",
+ jp.mintjams.tools.time;version="1.0.0",
  jp.mintjams.tools.util;version="1.0.0"
