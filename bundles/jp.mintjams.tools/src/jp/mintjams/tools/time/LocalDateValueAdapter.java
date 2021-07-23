@@ -20,38 +20,38 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.sql;
+package jp.mintjams.tools.time;
 
-import java.sql.Time;
+import java.time.LocalDate;
 import java.util.Map;
 
 import jp.mintjams.tools.lang.AbstractValueAdapter;
 import jp.mintjams.tools.lang.Adaptables;
 
-public class TimeValueAdapter extends AbstractValueAdapter<java.sql.Time> {
+public class LocalDateValueAdapter extends AbstractValueAdapter<LocalDate> {
 
-	public TimeValueAdapter() {
+	public LocalDateValueAdapter() {
 		super();
 	}
 
-	public TimeValueAdapter(Map<String, Object> env) {
+	public LocalDateValueAdapter(Map<String, Object> env) {
 		super(env);
 	}
 
 	@Override
-	public java.sql.Time adapt(Object value) {
+	public LocalDate adapt(Object value) {
 		if (value == null) {
 			return null;
 		}
 
-		Time timeValue = Adaptables.getAdapter(value, Time.class);
-		if (timeValue != null) {
-			return timeValue;
+		LocalDate localDateValue = Adaptables.getAdapter(value, LocalDate.class);
+		if (localDateValue != null) {
+			return localDateValue;
 		}
 
 		java.util.Date dateValue = new jp.mintjams.tools.lang.DateValueAdapter(fEnv).adapt(value);
 		if (dateValue != null) {
-			return new java.sql.Time(dateValue.getTime());
+			return dateValue.toInstant().atZone(getZoneId()).toLocalDate();
 		}
 
 		return null;

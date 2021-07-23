@@ -26,7 +26,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.time.OffsetDateTime;
 import java.util.Map;
+
+import jp.mintjams.tools.io.ReaderValueAdapter;
 
 public class StringValueAdapter extends AbstractValueAdapter<String> {
 
@@ -56,6 +59,10 @@ public class StringValueAdapter extends AbstractValueAdapter<String> {
 			} catch (IOException ex) {
 				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
 			}
+		}
+
+		if (value instanceof java.util.Date) {
+			return OffsetDateTime.ofInstant(((java.util.Date) value).toInstant(), getZoneId()).toString();
 		}
 
 		return value.toString();

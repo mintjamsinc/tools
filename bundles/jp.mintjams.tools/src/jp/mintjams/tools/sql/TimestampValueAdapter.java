@@ -22,9 +22,11 @@
 
 package jp.mintjams.tools.sql;
 
+import java.sql.Timestamp;
 import java.util.Map;
 
 import jp.mintjams.tools.lang.AbstractValueAdapter;
+import jp.mintjams.tools.lang.Adaptables;
 
 public class TimestampValueAdapter extends AbstractValueAdapter<java.sql.Timestamp> {
 
@@ -40,6 +42,11 @@ public class TimestampValueAdapter extends AbstractValueAdapter<java.sql.Timesta
 	public java.sql.Timestamp adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+
+		Timestamp timestampValue = Adaptables.getAdapter(value, Timestamp.class);
+		if (timestampValue != null) {
+			return timestampValue;
 		}
 
 		java.util.Date dateValue = new jp.mintjams.tools.lang.DateValueAdapter(fEnv).adapt(value);

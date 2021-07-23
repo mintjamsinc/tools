@@ -20,66 +20,75 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.lang;
+package jp.mintjams.tools.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Blob;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.sql.Clob;
 import java.sql.SQLException;
 import java.util.Map;
 
-public class InputStreamValueAdapter extends AbstractValueAdapter<InputStream> {
+import jp.mintjams.tools.lang.AbstractValueAdapter;
+import jp.mintjams.tools.lang.Adaptables;
 
-	public InputStreamValueAdapter() {
+public class ReaderValueAdapter extends AbstractValueAdapter<Reader> {
+
+	public ReaderValueAdapter() {
 		super();
 	}
 
-	public InputStreamValueAdapter(Map<String, Object> env) {
+	public ReaderValueAdapter(Map<String, Object> env) {
 		super(env);
 	}
 
 	@Override
-	public InputStream adapt(Object value) {
+	public Reader adapt(Object value) {
 		if (value == null) {
 			return null;
 		}
 
-		InputStream streamValue = Adaptables.getAdapter(value, InputStream.class);
-		if (streamValue != null) {
-			return streamValue;
-		}
-
-		Blob blobValue = Adaptables.getAdapter(value, Blob.class);
-		if (blobValue != null) {
-			try {
-				return blobValue.getBinaryStream();
-			} catch (SQLException ex) {
-				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
-			}
+		Reader readerValue = Adaptables.getAdapter(value, Reader.class);
+		if (readerValue != null) {
+			return readerValue;
 		}
 
 		Clob clobValue = Adaptables.getAdapter(value, Clob.class);
 		if (clobValue != null) {
 			try {
-				return clobValue.getAsciiStream();
+				return clobValue.getCharacterStream();
 			} catch (SQLException ex) {
+				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
+			}
+		}
+
+		InputStream streamValue = Adaptables.getAdapter(value, InputStream.class);
+		if (streamValue != null) {
+			try {
+				return new InputStreamReader(streamValue, getEncoding());
+			} catch (IOException ex) {
 				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
 			}
 		}
 
 		byte[] byteArrayValue = Adaptables.getAdapter(value, byte[].class);
 		if (byteArrayValue != null) {
-			return new ByteArrayInputStream(byteArrayValue);
+			try {
+				return new InputStreamReader(new ByteArrayInputStream(byteArrayValue), getEncoding());
+			} catch (IOException ex) {
+				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
+			}
 		}
 
 		File fileValue = Adaptables.getAdapter(value, File.class);
 		if (fileValue != null) {
 			try {
-				return new FileInputStream(fileValue);
+				return new InputStreamReader(new FileInputStream(fileValue), getEncoding());
 			} catch (IOException ex) {
 				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
 			}
@@ -87,11 +96,7 @@ public class InputStreamValueAdapter extends AbstractValueAdapter<InputStream> {
 
 		String stringValue = Adaptables.getAdapter(value, String.class);
 		if (stringValue != null) {
-			try {
-				return new ByteArrayInputStream(stringValue.getBytes(getEncoding()));
-			} catch (IOException ex) {
-				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
-			}
+			return new StringReader(stringValue);
 		}
 
 		return null;

@@ -20,38 +20,39 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.sql;
+package jp.mintjams.tools.time;
 
-import java.sql.Time;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 import jp.mintjams.tools.lang.AbstractValueAdapter;
 import jp.mintjams.tools.lang.Adaptables;
 
-public class TimeValueAdapter extends AbstractValueAdapter<java.sql.Time> {
+public class OffsetDateTimeValueAdapter extends AbstractValueAdapter<OffsetDateTime> {
 
-	public TimeValueAdapter() {
+	public OffsetDateTimeValueAdapter() {
 		super();
 	}
 
-	public TimeValueAdapter(Map<String, Object> env) {
+	public OffsetDateTimeValueAdapter(Map<String, Object> env) {
 		super(env);
 	}
 
 	@Override
-	public java.sql.Time adapt(Object value) {
+	public OffsetDateTime adapt(Object value) {
 		if (value == null) {
 			return null;
 		}
 
-		Time timeValue = Adaptables.getAdapter(value, Time.class);
-		if (timeValue != null) {
-			return timeValue;
+		OffsetDateTime offsetDateTimeValue = Adaptables.getAdapter(value, OffsetDateTime.class);
+		if (offsetDateTimeValue != null) {
+			return offsetDateTimeValue;
 		}
 
 		java.util.Date dateValue = new jp.mintjams.tools.lang.DateValueAdapter(fEnv).adapt(value);
 		if (dateValue != null) {
-			return new java.sql.Time(dateValue.getTime());
+			return OffsetDateTime.ofInstant(dateValue.toInstant(), ZoneOffset.UTC);
 		}
 
 		return null;

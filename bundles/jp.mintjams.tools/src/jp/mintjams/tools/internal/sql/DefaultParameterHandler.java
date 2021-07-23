@@ -32,15 +32,15 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+import jp.mintjams.tools.io.InputStreamValueAdapter;
+import jp.mintjams.tools.io.ReaderValueAdapter;
 import jp.mintjams.tools.lang.BigDecimalValueAdapter;
 import jp.mintjams.tools.lang.BooleanValueAdapter;
 import jp.mintjams.tools.lang.ByteValueAdapter;
 import jp.mintjams.tools.lang.DoubleValueAdapter;
 import jp.mintjams.tools.lang.FloatValueAdapter;
-import jp.mintjams.tools.lang.InputStreamValueAdapter;
 import jp.mintjams.tools.lang.IntegerValueAdapter;
 import jp.mintjams.tools.lang.LongValueAdapter;
-import jp.mintjams.tools.lang.ReaderValueAdapter;
 import jp.mintjams.tools.lang.ShortValueAdapter;
 import jp.mintjams.tools.lang.StringValueAdapter;
 import jp.mintjams.tools.lang.ValueAdapter;
