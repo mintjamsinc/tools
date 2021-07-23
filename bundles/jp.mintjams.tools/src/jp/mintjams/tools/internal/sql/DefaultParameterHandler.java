@@ -32,21 +32,19 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
-import jp.mintjams.tools.io.InputStreamValueAdapter;
-import jp.mintjams.tools.io.ReaderValueAdapter;
-import jp.mintjams.tools.lang.BigDecimalValueAdapter;
-import jp.mintjams.tools.lang.BooleanValueAdapter;
-import jp.mintjams.tools.lang.ByteValueAdapter;
-import jp.mintjams.tools.lang.DoubleValueAdapter;
-import jp.mintjams.tools.lang.FloatValueAdapter;
-import jp.mintjams.tools.lang.IntegerValueAdapter;
-import jp.mintjams.tools.lang.LongValueAdapter;
-import jp.mintjams.tools.lang.ShortValueAdapter;
-import jp.mintjams.tools.lang.StringValueAdapter;
-import jp.mintjams.tools.lang.ValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapter;
+import jp.mintjams.tools.internal.io.InputStreamValueAdapter;
+import jp.mintjams.tools.internal.io.ReaderValueAdapter;
+import jp.mintjams.tools.internal.lang.BigDecimalValueAdapter;
+import jp.mintjams.tools.internal.lang.BooleanValueAdapter;
+import jp.mintjams.tools.internal.lang.ByteValueAdapter;
+import jp.mintjams.tools.internal.lang.DoubleValueAdapter;
+import jp.mintjams.tools.internal.lang.FloatValueAdapter;
+import jp.mintjams.tools.internal.lang.IntegerValueAdapter;
+import jp.mintjams.tools.internal.lang.LongValueAdapter;
+import jp.mintjams.tools.internal.lang.ShortValueAdapter;
+import jp.mintjams.tools.internal.lang.StringValueAdapter;
 import jp.mintjams.tools.sql.ParameterHandler;
-import jp.mintjams.tools.sql.TimeValueAdapter;
-import jp.mintjams.tools.sql.TimestampValueAdapter;
 
 public class DefaultParameterHandler implements ParameterHandler {
 
@@ -213,7 +211,7 @@ public class DefaultParameterHandler implements ParameterHandler {
 		DATE(Types.DATE) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
-				java.sql.Date value = new jp.mintjams.tools.sql.DateValueAdapter(createEnv(context)).adapt(context.getValue());
+				java.sql.Date value = new jp.mintjams.tools.internal.sql.DateValueAdapter(createEnv(context)).adapt(context.getValue());
 				if (value == null) {
 					context.getStatement().setNull(context.getIndex(), context.getType());
 					return;

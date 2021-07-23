@@ -38,28 +38,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import jp.mintjams.tools.io.InputStreamValueAdapter;
-import jp.mintjams.tools.io.ReaderValueAdapter;
-import jp.mintjams.tools.lang.AdaptableValue;
-import jp.mintjams.tools.lang.BigDecimalValueAdapter;
-import jp.mintjams.tools.lang.BigIntegerValueAdapter;
-import jp.mintjams.tools.lang.BooleanValueAdapter;
-import jp.mintjams.tools.lang.ByteValueAdapter;
-import jp.mintjams.tools.lang.CharacterValueAdapter;
-import jp.mintjams.tools.lang.DoubleValueAdapter;
-import jp.mintjams.tools.lang.FloatValueAdapter;
-import jp.mintjams.tools.lang.IntegerValueAdapter;
-import jp.mintjams.tools.lang.LongValueAdapter;
-import jp.mintjams.tools.lang.ShortValueAdapter;
-import jp.mintjams.tools.lang.StringValueAdapter;
-import jp.mintjams.tools.lang.ValueAdapter;
-import jp.mintjams.tools.sql.TimeValueAdapter;
-import jp.mintjams.tools.sql.TimestampValueAdapter;
-import jp.mintjams.tools.time.LocalDateTimeValueAdapter;
-import jp.mintjams.tools.time.LocalDateValueAdapter;
-import jp.mintjams.tools.time.LocalTimeValueAdapter;
-import jp.mintjams.tools.time.OffsetDateTimeValueAdapter;
-import jp.mintjams.tools.time.OffsetTimeValueAdapter;
+import jp.mintjams.tools.adapter.AdaptableValue;
+import jp.mintjams.tools.adapter.ValueAdapter;
+import jp.mintjams.tools.internal.io.InputStreamValueAdapter;
+import jp.mintjams.tools.internal.io.ReaderValueAdapter;
+import jp.mintjams.tools.internal.lang.BigDecimalValueAdapter;
+import jp.mintjams.tools.internal.lang.BigIntegerValueAdapter;
+import jp.mintjams.tools.internal.lang.BooleanValueAdapter;
+import jp.mintjams.tools.internal.lang.ByteValueAdapter;
+import jp.mintjams.tools.internal.lang.CharacterValueAdapter;
+import jp.mintjams.tools.internal.lang.DoubleValueAdapter;
+import jp.mintjams.tools.internal.lang.FloatValueAdapter;
+import jp.mintjams.tools.internal.lang.IntegerValueAdapter;
+import jp.mintjams.tools.internal.lang.LongValueAdapter;
+import jp.mintjams.tools.internal.lang.ShortValueAdapter;
+import jp.mintjams.tools.internal.lang.StringValueAdapter;
+import jp.mintjams.tools.internal.sql.TimeValueAdapter;
+import jp.mintjams.tools.internal.sql.TimestampValueAdapter;
+import jp.mintjams.tools.internal.time.LocalDateTimeValueAdapter;
+import jp.mintjams.tools.internal.time.LocalDateValueAdapter;
+import jp.mintjams.tools.internal.time.LocalTimeValueAdapter;
+import jp.mintjams.tools.internal.time.OffsetDateTimeValueAdapter;
+import jp.mintjams.tools.internal.time.OffsetTimeValueAdapter;
 
 public class AdaptableMap<K, V> implements Map<K, V> {
 
@@ -165,7 +165,7 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 			fValueAdapterMap.put(Boolean.class, BooleanValueAdapter.class);
 			fValueAdapterMap.put(Byte.class, ByteValueAdapter.class);
 			fValueAdapterMap.put(Character.class, CharacterValueAdapter.class);
-			fValueAdapterMap.put(java.util.Date.class, jp.mintjams.tools.lang.DateValueAdapter.class);
+			fValueAdapterMap.put(java.util.Date.class, jp.mintjams.tools.internal.util.DateValueAdapter.class);
 			fValueAdapterMap.put(Double.class, DoubleValueAdapter.class);
 			fValueAdapterMap.put(Float.class, FloatValueAdapter.class);
 			fValueAdapterMap.put(InputStream.class, InputStreamValueAdapter.class);
@@ -174,7 +174,7 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 			fValueAdapterMap.put(Reader.class, ReaderValueAdapter.class);
 			fValueAdapterMap.put(Short.class, ShortValueAdapter.class);
 			fValueAdapterMap.put(String.class, StringValueAdapter.class);
-			fValueAdapterMap.put(java.sql.Date.class, jp.mintjams.tools.sql.DateValueAdapter.class);
+			fValueAdapterMap.put(java.sql.Date.class, jp.mintjams.tools.internal.sql.DateValueAdapter.class);
 			fValueAdapterMap.put(Timestamp.class, TimestampValueAdapter.class);
 			fValueAdapterMap.put(Time.class, TimeValueAdapter.class);
 			fValueAdapterMap.put(OffsetDateTime.class, OffsetDateTimeValueAdapter.class);

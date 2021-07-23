@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import jp.mintjams.tools.internal.sql.SQLStatement;
 import jp.mintjams.tools.util.Closer;
 
 public class Update implements Closeable {
