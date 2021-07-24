@@ -22,6 +22,7 @@
 
 package jp.mintjams.tools.adapter;
 
+import java.nio.charset.Charset;
 import java.time.ZoneId;
 
 public interface AdaptableValue<ValueType> {
@@ -29,6 +30,10 @@ public interface AdaptableValue<ValueType> {
 	AdaptableValue<ValueType> setProperty(String key, Object value);
 
 	AdaptableValue<ValueType> setEncoding(String encoding);
+
+	AdaptableValue<ValueType> setEncoding(Charset encoding);
+
+	AdaptableValue<ValueType> setZoneId(String zoneId);
 
 	AdaptableValue<ValueType> setZoneId(ZoneId zoneId);
 

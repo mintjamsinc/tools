@@ -87,7 +87,27 @@ public abstract class AbstractValueAdapter<ValueType> implements ValueAdapter<Va
 
 		@Override
 		public AdaptableValue<ValueType> setEncoding(String encoding) {
+			if (!Charset.isSupported(encoding)) {
+				throw new IllegalArgumentException(encoding);
+			}
+
 			setProperty(ENV_ENCODING, encoding);
+			return this;
+		}
+
+		@Override
+		public AdaptableValue<ValueType> setEncoding(Charset encoding) {
+			setProperty(ENV_ENCODING, encoding);
+			return null;
+		}
+
+		@Override
+		public AdaptableValue<ValueType> setZoneId(String zoneId) {
+			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
+				throw new IllegalArgumentException(zoneId);
+			}
+
+			setProperty(ENV_ZONEID, zoneId);
 			return this;
 		}
 
