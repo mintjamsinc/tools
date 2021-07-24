@@ -23,7 +23,6 @@
 package jp.mintjams.tools.internal.time;
 
 import java.time.OffsetTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
@@ -52,7 +51,7 @@ public class OffsetTimeValueAdapter extends AbstractValueAdapter<OffsetTime> {
 
 		java.util.Date dateValue = new jp.mintjams.tools.internal.util.DateValueAdapter(fEnv).adapt(value);
 		if (dateValue != null) {
-			return OffsetTime.ofInstant(dateValue.toInstant(), ZoneOffset.UTC);
+			return OffsetTime.ofInstant(dateValue.toInstant(), getZoneId());
 		}
 
 		return null;
