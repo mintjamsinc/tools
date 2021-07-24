@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.util;
+package jp.mintjams.tools.io;
 
 import java.io.Closeable;
 import java.io.IOException;

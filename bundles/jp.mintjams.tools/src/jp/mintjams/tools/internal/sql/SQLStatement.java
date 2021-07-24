@@ -39,9 +39,9 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jp.mintjams.tools.io.Closer;
 import jp.mintjams.tools.sql.ParameterHandler;
 import jp.mintjams.tools.sql.ParameterHandler.ParameterContext;
-import jp.mintjams.tools.util.Closer;
 
 public class SQLStatement implements Closeable {
 

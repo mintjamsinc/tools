@@ -38,8 +38,8 @@ import java.util.Objects;
 import jp.mintjams.tools.collections.AdaptableMap;
 import jp.mintjams.tools.internal.sql.DefaultResultHandler;
 import jp.mintjams.tools.internal.sql.SQLStatement;
+import jp.mintjams.tools.io.Closer;
 import jp.mintjams.tools.sql.ResultHandler.ResultContext;
-import jp.mintjams.tools.util.Closer;
 
 public class Query implements Closeable {
 

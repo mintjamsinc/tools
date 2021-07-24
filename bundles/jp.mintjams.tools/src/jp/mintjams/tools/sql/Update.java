@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import jp.mintjams.tools.internal.sql.SQLStatement;
-import jp.mintjams.tools.util.Closer;
+import jp.mintjams.tools.io.Closer;
 
 public class Update implements Closeable {
 
