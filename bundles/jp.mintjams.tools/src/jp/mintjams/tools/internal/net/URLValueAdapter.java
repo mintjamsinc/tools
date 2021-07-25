@@ -26,8 +26,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.internal.lang.StringValueAdapter;
 
 public class URLValueAdapter extends AbstractValueAdapter<URL> {

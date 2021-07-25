@@ -29,8 +29,8 @@ import java.io.StringWriter;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.internal.io.ReaderValueAdapter;
 
 public class StringValueAdapter extends AbstractValueAdapter<String> {

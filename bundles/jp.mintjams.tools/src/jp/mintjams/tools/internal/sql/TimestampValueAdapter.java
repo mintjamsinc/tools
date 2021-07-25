@@ -25,8 +25,8 @@ package jp.mintjams.tools.internal.sql;
 import java.sql.Timestamp;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 
 public class TimestampValueAdapter extends AbstractValueAdapter<java.sql.Timestamp> {
 

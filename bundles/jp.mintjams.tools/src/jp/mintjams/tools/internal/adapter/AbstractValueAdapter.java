@@ -20,12 +20,15 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.adapter;
+package jp.mintjams.tools.internal.adapter;
 
 import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+
+import jp.mintjams.tools.adapter.AdaptableValue;
+import jp.mintjams.tools.adapter.ValueAdapter;
 
 public abstract class AbstractValueAdapter<ValueType> implements ValueAdapter<ValueType> {
 

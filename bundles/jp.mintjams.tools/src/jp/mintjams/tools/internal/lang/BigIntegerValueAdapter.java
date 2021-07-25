@@ -26,8 +26,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 
 public class BigIntegerValueAdapter extends AbstractValueAdapter<BigInteger> {
 

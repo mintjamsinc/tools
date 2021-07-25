@@ -26,8 +26,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 
 public class LocalTimeValueAdapter extends AbstractValueAdapter<LocalTime> {
 

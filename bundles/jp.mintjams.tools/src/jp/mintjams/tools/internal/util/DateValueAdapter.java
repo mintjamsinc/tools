@@ -30,8 +30,8 @@ import java.time.OffsetTime;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.internal.lang.StringValueAdapter;
 
 public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {

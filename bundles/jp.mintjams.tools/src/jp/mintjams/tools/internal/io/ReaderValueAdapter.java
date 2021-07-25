@@ -34,8 +34,8 @@ import java.sql.Clob;
 import java.sql.SQLException;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 
 public class ReaderValueAdapter extends AbstractValueAdapter<Reader> {
 
