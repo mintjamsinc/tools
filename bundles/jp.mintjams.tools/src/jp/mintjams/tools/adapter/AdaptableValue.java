@@ -24,6 +24,7 @@ package jp.mintjams.tools.adapter;
 
 import java.nio.charset.Charset;
 import java.time.ZoneId;
+import java.util.TimeZone;
 
 public interface AdaptableValue<ValueType> {
 
@@ -36,6 +37,14 @@ public interface AdaptableValue<ValueType> {
 	AdaptableValue<ValueType> setZoneId(String zoneId);
 
 	AdaptableValue<ValueType> setZoneId(ZoneId zoneId);
+
+	AdaptableValue<ValueType> setZoneId(TimeZone timeZone);
+
+	AdaptableValue<ValueType> setDisplayZoneId(String zoneId);
+
+	AdaptableValue<ValueType> setDisplayZoneId(ZoneId zoneId);
+
+	AdaptableValue<ValueType> setDisplayZoneId(TimeZone timeZone);
 
 	ValueType getValue();
 

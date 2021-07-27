@@ -26,12 +26,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.temporal.Temporal;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
 import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.internal.io.ReaderValueAdapter;
+import jp.mintjams.tools.internal.util.Dates;
 
 public class StringValueAdapter extends AbstractValueAdapter<String> {
 
@@ -64,7 +72,15 @@ public class StringValueAdapter extends AbstractValueAdapter<String> {
 		}
 
 		if (value instanceof java.util.Date) {
-			return OffsetDateTime.ofInstant(((java.util.Date) value).toInstant(), getZoneId()).toString();
+			return formatDateTime((java.util.Date) value);
+		}
+
+		if (value instanceof Temporal) {
+			return asString((Temporal) value);
+		}
+
+		if (value instanceof Number) {
+			return asString((Number) value);
 		}
 
 		return value.toString();
@@ -91,6 +107,62 @@ public class StringValueAdapter extends AbstractValueAdapter<String> {
 		}
 
 		return new BufferedReader(reader);
+	}
+
+	private String formatDateTime(java.util.Date value) {
+		return Dates.asOffsetDateTime(value, getDisplayZoneId()).toString();
+	}
+
+	private String formatDate(java.util.Date value) {
+		return Dates.asOffsetDateTime(value, getDisplayZoneId()).toLocalDate().toString();
+	}
+
+	private String formatTime(java.util.Date value) {
+		return Dates.asOffsetDateTime(value, getDisplayZoneId()).toOffsetTime().toString();
+	}
+
+	private String asString(Temporal value) {
+		if (value instanceof OffsetDateTime) {
+			return formatDateTime(Dates.asDate((OffsetDateTime) value));
+		}
+
+		if (value instanceof LocalDateTime) {
+			return formatDateTime(Dates.asDate((LocalDateTime) value, getZoneId()));
+		}
+
+		if (value instanceof LocalDate) {
+			return formatDate(Dates.asDate((LocalDate) value));
+		}
+
+		if (value instanceof OffsetTime) {
+			return formatTime(Dates.asDate((OffsetTime) value));
+		}
+
+		if (value instanceof LocalTime) {
+			return formatTime(Dates.asDate((LocalTime) value, getZoneId()));
+		}
+
+		return value.toString();
+	}
+
+	private String asString(Number value) {
+		if (value instanceof BigDecimal) {
+			return ((BigDecimal) value).toPlainString();
+		}
+
+		if (value instanceof BigInteger) {
+			return ((BigInteger) value).toString();
+		}
+
+		if (value instanceof Float) {
+			return new BigDecimal("" + value.floatValue()).toPlainString();
+		}
+
+		if (value instanceof Double) {
+			return new BigDecimal("" + value.doubleValue()).toPlainString();
+		}
+
+		return BigDecimal.valueOf(value.longValue()).toPlainString();
 	}
 
 }

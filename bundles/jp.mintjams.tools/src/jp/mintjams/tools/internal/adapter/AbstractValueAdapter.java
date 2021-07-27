@@ -26,6 +26,7 @@ import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import jp.mintjams.tools.adapter.AdaptableValue;
 import jp.mintjams.tools.adapter.ValueAdapter;
@@ -59,6 +60,20 @@ public abstract class AbstractValueAdapter<ValueType> implements ValueAdapter<Va
 	protected ZoneId getZoneId() {
 		ZoneId zoneId = null;
 		Object o = fEnv.get(ENV_ZONEID);
+		if (o instanceof ZoneId) {
+			zoneId = (ZoneId) o;
+		} else if (o instanceof String) {
+			zoneId = ZoneId.of((String) o);
+		}
+		if (zoneId == null) {
+			return ZoneId.systemDefault();
+		}
+		return zoneId;
+	}
+
+	protected ZoneId getDisplayZoneId() {
+		ZoneId zoneId = null;
+		Object o = fEnv.get(ENV_DISPLAYZONEID);
 		if (o instanceof ZoneId) {
 			zoneId = (ZoneId) o;
 		} else if (o instanceof String) {
@@ -117,6 +132,34 @@ public abstract class AbstractValueAdapter<ValueType> implements ValueAdapter<Va
 		@Override
 		public AdaptableValue<ValueType> setZoneId(ZoneId zoneId) {
 			setProperty(ENV_ZONEID, zoneId);
+			return this;
+		}
+
+		@Override
+		public AdaptableValue<ValueType> setZoneId(TimeZone timeZone) {
+			setProperty(ENV_ZONEID, timeZone.toZoneId());
+			return this;
+		}
+
+		@Override
+		public AdaptableValue<ValueType> setDisplayZoneId(String zoneId) {
+			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
+				throw new IllegalArgumentException(zoneId);
+			}
+
+			setProperty(ENV_DISPLAYZONEID, zoneId);
+			return this;
+		}
+
+		@Override
+		public AdaptableValue<ValueType> setDisplayZoneId(ZoneId zoneId) {
+			setProperty(ENV_DISPLAYZONEID, zoneId);
+			return this;
+		}
+
+		@Override
+		public AdaptableValue<ValueType> setDisplayZoneId(TimeZone timeZone) {
+			setProperty(ENV_DISPLAYZONEID, timeZone.toZoneId());
 			return this;
 		}
 

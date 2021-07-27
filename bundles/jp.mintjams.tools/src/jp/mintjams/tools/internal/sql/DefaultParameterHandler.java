@@ -80,6 +80,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 			env.put(ValueAdapter.ENV_ZONEID, zoneIdString);
 		}
 
+		String displayZoneIdString = context.getOptions().get(ValueAdapter.ENV_DISPLAYZONEID);
+		if (displayZoneIdString != null && !displayZoneIdString.trim().isEmpty()) {
+			env.put(ValueAdapter.ENV_DISPLAYZONEID, displayZoneIdString);
+		}
+
 		return env;
 	}
 

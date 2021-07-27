@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
@@ -52,17 +51,17 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 
 		java.sql.Timestamp sqlTimestampValue = Adaptables.getAdapter(value, java.sql.Timestamp.class);
 		if (sqlTimestampValue != null) {
-			return from(sqlTimestampValue);
+			return Dates.asDate(sqlTimestampValue);
 		}
 
 		java.sql.Date sqlDateValue = Adaptables.getAdapter(value, java.sql.Date.class);
 		if (sqlDateValue != null) {
-			return from(sqlDateValue);
+			return Dates.asDate(sqlDateValue);
 		}
 
 		java.sql.Time sqlTimeValue = Adaptables.getAdapter(value, java.sql.Time.class);
 		if (sqlTimeValue != null) {
-			return from(sqlTimeValue);
+			return Dates.asDate(sqlTimeValue);
 		}
 
 		java.util.Date dateValue = Adaptables.getAdapter(value, java.util.Date.class);
@@ -72,97 +71,65 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 
 		OffsetDateTime offsetDateTimeValue = Adaptables.getAdapter(value, OffsetDateTime.class);
 		if (offsetDateTimeValue != null) {
-			return from(offsetDateTimeValue);
+			return Dates.asDate(offsetDateTimeValue);
 		}
 
 		LocalDateTime localDateTimeValue = Adaptables.getAdapter(value, LocalDateTime.class);
 		if (localDateTimeValue != null) {
-			return from(localDateTimeValue);
+			return Dates.asDate(localDateTimeValue, getZoneId());
 		}
 
 		LocalDate localDateValue = Adaptables.getAdapter(value, LocalDate.class);
 		if (localDateValue != null) {
-			return from(localDateValue);
+			return Dates.asDate(localDateValue);
 		}
 
 		OffsetTime offsetTimeValue = Adaptables.getAdapter(value, OffsetTime.class);
 		if (offsetTimeValue != null) {
-			return from(offsetTimeValue);
+			return Dates.asDate(offsetTimeValue);
 		}
 
 		LocalTime localTimeValue = Adaptables.getAdapter(value, LocalTime.class);
 		if (localTimeValue != null) {
-			return from(localTimeValue);
+			return Dates.asDate(localTimeValue, getZoneId());
 		}
 
 		String stringValue = new StringValueAdapter(fEnv).adapt(value);
 		if (stringValue != null) {
 			try {
-				return from(OffsetDateTime.parse(stringValue));
+				return Dates.asDate(OffsetDateTime.parse(stringValue));
 			} catch (Exception ignore) {}
 
 			try {
-				return from(LocalDateTime.parse(stringValue));
+				return Dates.asDate(LocalDateTime.parse(stringValue), getZoneId());
 			} catch (Exception ignore) {}
 
 			try {
-				return from(LocalDate.parse(stringValue));
+				return Dates.asDate(LocalDate.parse(stringValue));
 			} catch (Exception ignore) {}
 
 			try {
-				return from(OffsetTime.parse(stringValue));
+				return Dates.asDate(OffsetTime.parse(stringValue));
 			} catch (Exception ignore) {}
 
 			try {
-				return from(LocalTime.parse(stringValue));
+				return Dates.asDate(LocalTime.parse(stringValue), getZoneId());
 			} catch (Exception ignore) {}
 
 			try {
-				return from(java.sql.Timestamp.valueOf(stringValue));
+				return Dates.asDate(java.sql.Timestamp.valueOf(stringValue));
 			} catch (Exception ignore) {}
 
 			try {
-				return from(java.sql.Date.valueOf(stringValue));
+				return Dates.asDate(java.sql.Date.valueOf(stringValue));
 			} catch (Exception ignore) {}
 
 			try {
-				return from(java.sql.Time.valueOf(stringValue));
+				return Dates.asDate(java.sql.Time.valueOf(stringValue));
 			} catch (Exception ignore) {}
 		}
 
 		return null;
-	}
-
-	private java.util.Date from(java.sql.Timestamp timestamp) {
-		return new java.util.Date(timestamp.getTime());
-	}
-
-	private java.util.Date from(java.sql.Date date) {
-		return new java.util.Date(date.getTime());
-	}
-
-	private java.util.Date from(java.sql.Time time) {
-		return new java.util.Date(time.getTime());
-	}
-
-	private java.util.Date from(OffsetDateTime offsetDateTime) {
-		return java.util.Date.from(offsetDateTime.toInstant());
-	}
-
-	private java.util.Date from(LocalDateTime localDateTime) {
-		return java.util.Date.from(ZonedDateTime.of(localDateTime, getZoneId()).toInstant());
-	}
-
-	private java.util.Date from(LocalDate localDate) {
-		return new java.util.Date(localDate.toEpochDay() * 86400000);
-	}
-
-	private java.util.Date from(OffsetTime offsetTime) {
-		return java.util.Date.from(offsetTime.atDate(LocalDate.ofEpochDay(0)).toInstant());
-	}
-
-	private java.util.Date from(LocalTime localTime) {
-		return java.util.Date.from(ZonedDateTime.of(localTime.atDate(LocalDate.ofEpochDay(0)), getZoneId()).toInstant());
 	}
 
 }
