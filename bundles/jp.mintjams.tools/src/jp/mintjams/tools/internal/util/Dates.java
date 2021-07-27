@@ -66,6 +66,10 @@ public class Dates {
 		return java.util.Date.from(ZonedDateTime.of(localTime.atDate(LocalDate.ofEpochDay(0)), zoneId).toInstant());
 	}
 
+	public static java.util.Date asDate(long timeInMillis) {
+		return new java.util.Date(timeInMillis);
+	}
+
 	public static OffsetDateTime asOffsetDateTime(java.util.Date value, ZoneId zoneId) {
 		if (value instanceof java.sql.Date || value instanceof java.sql.Time || value instanceof java.sql.Timestamp) {
 			value = new java.util.Date(value.getTime());

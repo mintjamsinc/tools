@@ -129,6 +129,11 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			} catch (Exception ignore) {}
 		}
 
+		Number numberValue = Adaptables.getAdapter(value, Number.class);
+		if (numberValue != null) {
+			return Dates.asDate(numberValue.longValue());
+		}
+
 		return null;
 	}
 
