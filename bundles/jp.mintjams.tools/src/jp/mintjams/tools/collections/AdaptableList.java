@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.TimeZone;
 
 import jp.mintjams.tools.adapter.AdaptableValue;
 import jp.mintjams.tools.adapter.ValueAdapter;
@@ -68,10 +71,12 @@ public class AdaptableList<E> implements List<E> {
 
 	private final List<E> fList;
 	private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap;
+	private final Map<String, Object> fEnv;
 
 	public AdaptableList(Builder<E> builder) {
 		fList = builder.fList;
 		fValueAdapterMap = builder.fValueAdapterMap;
+		fEnv = builder.fEnv;
 	}
 
 	@Override
@@ -211,6 +216,11 @@ public class AdaptableList<E> implements List<E> {
 			if (env == null) {
 				env = new HashMap<>();
 			}
+			for (Map.Entry<String, Object> e : fEnv.entrySet()) {
+				if (!env.containsKey(e.getKey())) {
+					env.put(e.getKey(), e.getValue());
+				}
+			}
 			try {
 				return (AdaptableValue<ValueType>) valueAdapterType.getConstructor(Map.class).newInstance(env).getAdaptableValue(get(index));
 			} catch (Throwable ignore) {}
@@ -302,6 +312,7 @@ public class AdaptableList<E> implements List<E> {
 	public static class Builder<E> {
 		private final List<E> fList = new ArrayList<>();
 		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap = new HashMap<>();
+		private final Map<String, Object> fEnv = new HashMap<>();
 
 		private Builder() {
 			fValueAdapterMap.put(BigDecimal.class, BigDecimalValueAdapter.class);
@@ -340,6 +351,63 @@ public class AdaptableList<E> implements List<E> {
 
 		public Builder<E> add(E e) {
 			fList.add(e);
+			return this;
+		}
+
+		public Builder<E> setProperty(String key, Object value) {
+			fEnv.put(key, value);
+			return this;
+		}
+
+		public Builder<E> setEncoding(String encoding) {
+			if (!Charset.isSupported(encoding)) {
+				throw new IllegalArgumentException(encoding);
+			}
+
+			setProperty(ValueAdapter.ENV_ENCODING, encoding);
+			return this;
+		}
+
+		public Builder<E> setEncoding(Charset encoding) {
+			setProperty(ValueAdapter.ENV_ENCODING, encoding);
+			return null;
+		}
+
+		public Builder<E> setZoneId(String zoneId) {
+			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
+				throw new IllegalArgumentException(zoneId);
+			}
+
+			setProperty(ValueAdapter.ENV_ZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<E> setZoneId(ZoneId zoneId) {
+			setProperty(ValueAdapter.ENV_ZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<E> setZoneId(TimeZone timeZone) {
+			setProperty(ValueAdapter.ENV_ZONEID, timeZone.toZoneId());
+			return this;
+		}
+
+		public Builder<E> setDisplayZoneId(String zoneId) {
+			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
+				throw new IllegalArgumentException(zoneId);
+			}
+
+			setProperty(ValueAdapter.ENV_DISPLAYZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<E> setDisplayZoneId(ZoneId zoneId) {
+			setProperty(ValueAdapter.ENV_DISPLAYZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<E> setDisplayZoneId(TimeZone timeZone) {
+			setProperty(ValueAdapter.ENV_DISPLAYZONEID, timeZone.toZoneId());
 			return this;
 		}
 
