@@ -219,6 +219,82 @@ public class AdaptableList<E> implements List<E> {
 		return null;
 	}
 
+	public BigDecimal getBigDecimal(int index) {
+		return adapt(index, BigDecimal.class).getValue();
+	}
+
+	public BigInteger getBigInteger(int index) {
+		return adapt(index, BigInteger.class).getValue();
+	}
+
+	public Boolean getBoolean(int index) {
+		return adapt(index, Boolean.class).getValue();
+	}
+
+	public Byte getByte(int index) {
+		return adapt(index, Byte.class).getValue();
+	}
+
+	public Character getCharacter(int index) {
+		return adapt(index, Character.class).getValue();
+	}
+
+	public java.util.Date getDate(int index) {
+		return adapt(index, java.util.Date.class).getValue();
+	}
+
+	public Double getDouble(int index) {
+		return adapt(index, Double.class).getValue();
+	}
+
+	public Float getFloat(int index) {
+		return adapt(index, Float.class).getValue();
+	}
+
+	public InputStream getInputStream(int index) {
+		return adapt(index, InputStream.class).getValue();
+	}
+
+	public Integer getInteger(int index) {
+		return adapt(index, Integer.class).getValue();
+	}
+
+	public Long getLong(int index) {
+		return adapt(index, Long.class).getValue();
+	}
+
+	public Reader getReader(int index) {
+		return adapt(index, Reader.class).getValue();
+	}
+
+	public Short getShort(int index) {
+		return adapt(index, Short.class).getValue();
+	}
+
+	public String getString(int index) {
+		return adapt(index, String.class).getValue();
+	}
+
+	public OffsetDateTime getOffsetDateTime(int index) {
+		return adapt(index, OffsetDateTime.class).getValue();
+	}
+
+	public LocalDateTime getLocalDateTime(int index) {
+		return adapt(index, LocalDateTime.class).getValue();
+	}
+
+	public LocalDate getLocalDate(int index) {
+		return adapt(index, LocalDate.class).getValue();
+	}
+
+	public OffsetTime getOffsetTime(int index) {
+		return adapt(index, OffsetTime.class).getValue();
+	}
+
+	public LocalTime getLocalTime(int index) {
+		return adapt(index, LocalTime.class).getValue();
+	}
+
 	public static <E> Builder<E> newBuilder() {
 		return new Builder<>();
 	}
