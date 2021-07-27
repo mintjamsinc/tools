@@ -51,7 +51,12 @@ public class BigDecimalValueAdapter extends AbstractValueAdapter<BigDecimal> {
 
 		Number numberValue = Adaptables.getAdapter(value, Number.class);
 		if (numberValue != null) {
-			return BigDecimal.valueOf(numberValue.doubleValue());
+			return new BigDecimal("" + numberValue.doubleValue());
+		}
+
+		java.util.Date dateValue = Adaptables.getAdapter(value, java.util.Date.class);
+		if (dateValue != null) {
+			return BigDecimal.valueOf(dateValue.getTime());
 		}
 
 		String stringValue = new StringValueAdapter(fEnv).adapt(value);
