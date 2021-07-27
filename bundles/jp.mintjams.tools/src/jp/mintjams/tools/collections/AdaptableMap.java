@@ -151,6 +151,82 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 		return null;
 	}
 
+	public BigDecimal getBigDecimal(Object key) {
+		return adapt(key, BigDecimal.class).getValue();
+	}
+
+	public BigInteger getBigInteger(Object key) {
+		return adapt(key, BigInteger.class).getValue();
+	}
+
+	public Boolean getBoolean(Object key) {
+		return adapt(key, Boolean.class).getValue();
+	}
+
+	public Byte getByte(Object key) {
+		return adapt(key, Byte.class).getValue();
+	}
+
+	public Character getCharacter(Object key) {
+		return adapt(key, Character.class).getValue();
+	}
+
+	public java.util.Date getDate(Object key) {
+		return adapt(key, java.util.Date.class).getValue();
+	}
+
+	public Double getDouble(Object key) {
+		return adapt(key, Double.class).getValue();
+	}
+
+	public Float getFloat(Object key) {
+		return adapt(key, Float.class).getValue();
+	}
+
+	public InputStream getInputStream(Object key) {
+		return adapt(key, InputStream.class).getValue();
+	}
+
+	public Integer getInteger(Object key) {
+		return adapt(key, Integer.class).getValue();
+	}
+
+	public Long getLong(Object key) {
+		return adapt(key, Long.class).getValue();
+	}
+
+	public Reader getReader(Object key) {
+		return adapt(key, Reader.class).getValue();
+	}
+
+	public Short getShort(Object key) {
+		return adapt(key, Short.class).getValue();
+	}
+
+	public String getString(Object key) {
+		return adapt(key, String.class).getValue();
+	}
+
+	public OffsetDateTime getOffsetDateTime(Object key) {
+		return adapt(key, OffsetDateTime.class).getValue();
+	}
+
+	public LocalDateTime getLocalDateTime(Object key) {
+		return adapt(key, LocalDateTime.class).getValue();
+	}
+
+	public LocalDate getLocalDate(Object key) {
+		return adapt(key, LocalDate.class).getValue();
+	}
+
+	public OffsetTime getOffsetTime(Object key) {
+		return adapt(key, OffsetTime.class).getValue();
+	}
+
+	public LocalTime getLocalTime(Object key) {
+		return adapt(key, LocalTime.class).getValue();
+	}
+
 	public static <K, V> Builder<K, V> newBuilder() {
 		return new Builder<>();
 	}
