@@ -54,6 +54,11 @@ public class LongValueAdapter extends AbstractValueAdapter<Long> {
 			return numberValue.longValue();
 		}
 
+		java.util.Date dateValue = Adaptables.getAdapter(value, java.util.Date.class);
+		if (dateValue != null) {
+			return dateValue.getTime();
+		}
+
 		String stringValue = new StringValueAdapter(fEnv).adapt(value);
 		if (stringValue != null) {
 			return new BigDecimal(stringValue).longValue();
