@@ -55,6 +55,11 @@ public class BigIntegerValueAdapter extends AbstractValueAdapter<BigInteger> {
 			return BigInteger.valueOf(numberValue.longValue());
 		}
 
+		java.util.Date dateValue = Adaptables.getAdapter(value, java.util.Date.class);
+		if (dateValue != null) {
+			return BigInteger.valueOf(dateValue.getTime());
+		}
+
 		String stringValue = new StringValueAdapter(fEnv).adapt(value);
 		if (stringValue != null) {
 			return BigInteger.valueOf(new BigDecimal(stringValue).longValue());
