@@ -24,10 +24,17 @@ package jp.mintjams.tools.internal.lang;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.temporal.Temporal;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
 import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.internal.util.Dates;
 
 public class BigIntegerValueAdapter extends AbstractValueAdapter<BigInteger> {
 
@@ -60,12 +67,40 @@ public class BigIntegerValueAdapter extends AbstractValueAdapter<BigInteger> {
 			return BigInteger.valueOf(dateValue.getTime());
 		}
 
+		if (value instanceof Temporal) {
+			return BigInteger.valueOf(asDate((Temporal) value).getTime());
+		}
+
 		String stringValue = new StringValueAdapter(fEnv).adapt(value);
 		if (stringValue != null) {
 			return BigInteger.valueOf(new BigDecimal(stringValue).longValue());
 		}
 
 		return null;
+	}
+
+	private java.util.Date asDate(Temporal value) {
+		if (value instanceof OffsetDateTime) {
+			return Dates.asDate((OffsetDateTime) value);
+		}
+
+		if (value instanceof LocalDateTime) {
+			return Dates.asDate((LocalDateTime) value, getZoneId());
+		}
+
+		if (value instanceof LocalDate) {
+			return Dates.asDate((LocalDate) value);
+		}
+
+		if (value instanceof OffsetTime) {
+			return Dates.asDate((OffsetTime) value);
+		}
+
+		if (value instanceof LocalTime) {
+			return Dates.asDate((LocalTime) value, getZoneId());
+		}
+
+		throw new IllegalArgumentException(value.getClass().getName());
 	}
 
 }
