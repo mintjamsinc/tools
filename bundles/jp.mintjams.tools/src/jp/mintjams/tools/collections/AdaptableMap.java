@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -33,10 +34,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import jp.mintjams.tools.adapter.AdaptableValue;
 import jp.mintjams.tools.adapter.ValueAdapter;
@@ -65,10 +68,12 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 
 	private final Map<K, V> fMap;
 	private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap;
+	private final Map<String, Object> fEnv;
 
 	private AdaptableMap(Builder<K, V> builder) {
 		fMap = builder.fMap;
 		fValueAdapterMap = builder.fValueAdapterMap;
+		fEnv = builder.fEnv;
 	}
 
 	@Override
@@ -142,6 +147,11 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 		if (valueAdapterType != null) {
 			if (env == null) {
 				env = new HashMap<>();
+			}
+			for (Map.Entry<String, Object> e : fEnv.entrySet()) {
+				if (!env.containsKey(e.getKey())) {
+					env.put(e.getKey(), e.getValue());
+				}
 			}
 			try {
 				return (AdaptableValue<ValueType>) valueAdapterType.getConstructor(Map.class).newInstance(env).getAdaptableValue(get(key));
@@ -234,6 +244,7 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 	public static class Builder<K, V> {
 		private final Map<K, V> fMap = new HashMap<>();
 		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap = new HashMap<>();
+		private final Map<String, Object> fEnv = new HashMap<>();
 
 		private Builder() {
 			fValueAdapterMap.put(BigDecimal.class, BigDecimalValueAdapter.class);
@@ -272,6 +283,63 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 
 		public Builder<K, V> put(K key, V value) {
 			fMap.put(key, value);
+			return this;
+		}
+
+		public Builder<K, V> setProperty(String key, Object value) {
+			fEnv.put(key, value);
+			return this;
+		}
+
+		public Builder<K, V> setEncoding(String encoding) {
+			if (!Charset.isSupported(encoding)) {
+				throw new IllegalArgumentException(encoding);
+			}
+
+			setProperty(ValueAdapter.ENV_ENCODING, encoding);
+			return this;
+		}
+
+		public Builder<K, V> setEncoding(Charset encoding) {
+			setProperty(ValueAdapter.ENV_ENCODING, encoding);
+			return null;
+		}
+
+		public Builder<K, V> setZoneId(String zoneId) {
+			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
+				throw new IllegalArgumentException(zoneId);
+			}
+
+			setProperty(ValueAdapter.ENV_ZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<K, V> setZoneId(ZoneId zoneId) {
+			setProperty(ValueAdapter.ENV_ZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<K, V> setZoneId(TimeZone timeZone) {
+			setProperty(ValueAdapter.ENV_ZONEID, timeZone.toZoneId());
+			return this;
+		}
+
+		public Builder<K, V> setDisplayZoneId(String zoneId) {
+			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
+				throw new IllegalArgumentException(zoneId);
+			}
+
+			setProperty(ValueAdapter.ENV_DISPLAYZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<K, V> setDisplayZoneId(ZoneId zoneId) {
+			setProperty(ValueAdapter.ENV_DISPLAYZONEID, zoneId);
+			return this;
+		}
+
+		public Builder<K, V> setDisplayZoneId(TimeZone timeZone) {
+			setProperty(ValueAdapter.ENV_DISPLAYZONEID, timeZone.toZoneId());
 			return this;
 		}
 
