@@ -94,6 +94,11 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			return Dates.asDate(localTimeValue, getZoneId());
 		}
 
+		Number numberValue = Adaptables.getAdapter(value, Number.class);
+		if (numberValue != null) {
+			return Dates.asDate(numberValue.longValue());
+		}
+
 		String stringValue = new StringValueAdapter(fEnv).adapt(value);
 		if (stringValue != null) {
 			try {
@@ -127,11 +132,6 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			try {
 				return Dates.asDate(java.sql.Time.valueOf(stringValue));
 			} catch (Exception ignore) {}
-		}
-
-		Number numberValue = Adaptables.getAdapter(value, Number.class);
-		if (numberValue != null) {
-			return Dates.asDate(numberValue.longValue());
 		}
 
 		return null;
