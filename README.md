@@ -29,6 +29,7 @@ AdaptableMap<String, Object> map = AdaptableMap
     .put("SQLTimestamp", new java.sql.Timestamp(System.currentTimeMillis()))
     .put("Boolean", Boolean.TRUE)
     .build();
+
 for (String key : map.keySet()) {
   // Gets the value as a String and outputs it.
   System.out.println(key + " (" + map.get(key).getClass().getName() + "): \"" + map.adapt(key, String.class).getValue() + "\"");
@@ -38,6 +39,7 @@ AdaptableList<Object> list = AdaptableList
     .<Object>newBuilder()
     .addAll(map.values())
     .build();
+
 for (int i = 0; i < list.size(); i++) {
   // Gets the value as a String and outputs it.
   System.out.println("" + i + " (" + list.get(i).getClass().getName() + "): \"" + list.adapt(i, String.class).getValue() + "\"");
@@ -53,6 +55,7 @@ try (Query query = Query
     .setVariable("minPrice", 200)
     .setConnection(connection)
     .build()) {
+
   for (AdaptableMap<String, Object> e : query.setOffset(0).setLimit(1000).execute()) {
     // Gets the value as a String.
     String name = e.getString("name");
@@ -89,10 +92,12 @@ Entity entity = Entity
     .setName("items")
     .setConnection(connection)
     .build();
+
 AdaptableMap<String, Object> pk = AdaptableMap
     .<String, Object>newBuilder()
     .put("id", "101")
     .build();
+
 try (Query query = entity.findByPrimaryKey(pk)) {
   AdaptableMap<String, Object> row = query.execute().iterator().next();
 
