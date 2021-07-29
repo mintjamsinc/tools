@@ -49,13 +49,14 @@ for (int i = 0; i < list.size(); i++) {
 Executing an SQL select statement
 
 ```java
-try (Query query = Query
+Query query = Query
     .newBuilder()
     .setStatement("SELECT * FROM items WHERE price >= {{minPrice}}")
     .setVariable("minPrice", 200)
     .setConnection(connection)
-    .build()) {
-  for (AdaptableMap<String, Object> e : query.setOffset(0).setLimit(1000).execute()) {
+    .build();
+try (Result result = query.setOffset(0).setLimit(1000).execute()) {
+  for (AdaptableMap<String, Object> e : result) {
     // Gets the value as a String.
     String name = e.getString("name");
 
@@ -71,16 +72,14 @@ try (Query query = Query
 Executing an SQL update statement
 
 ```java
-try (Update update = Update
+int updated = Update
     .newBuilder()
     .setStatement("UPDATE items SET price = {{newPrice}} WHERE id = {{id}}")
     .setVariable("id", "101")
     .setVariable("newPrice", 100)
     .setConnection(connection)
-    .build()) {
-  int updated = update.execute();
-  connection.commit();
-}
+    .build()
+    .execute();
 ```
 
 Using schema auto-detection
@@ -97,16 +96,13 @@ AdaptableMap<String, Object> pk = AdaptableMap
     .put("id", "101")
     .build();
 
-try (Query query = entity.findByPrimaryKey(pk)) {
-  AdaptableMap<String, Object> row = query.execute().iterator().next();
+try (Result result = entity.findByPrimaryKey(pk).execute()) {
+  AdaptableMap<String, Object> row = result.iterator().next();
 
   // The column type is automatically detected and the value is converted appropriately.
   row.put("release_date", "2021-03-23T01:00:00.000Z");
 
-  try (Update update = entity.update(row, pk)) {
-    int updated = update.execute();
-  }
-
+  int updated = entity.update(row, pk).execute();
   connection.commit();
 }
 ```
