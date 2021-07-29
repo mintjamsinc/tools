@@ -55,6 +55,7 @@ Query query = Query
     .setVariable("minPrice", 200)
     .setConnection(connection)
     .build();
+
 try (Result result = query.setOffset(0).setLimit(1000).execute()) {
   for (AdaptableMap<String, Object> e : result) {
     // Gets the value as a String.
