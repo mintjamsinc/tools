@@ -35,7 +35,7 @@ public interface ResultHandler {
 	interface ResultContext {
 		ResultSet getResultSet();
 		ResultSetMetaData getResultSetMetaData();
-		void addCloseable(Closeable closeable);
+		<C extends Closeable> C registerCloseable(C closeable);
 	}
 
 }

@@ -95,8 +95,7 @@ public class SQLStatement implements Closeable {
 			throw new IllegalStateException("SQLStatement already open.");
 		}
 
-		fPreparedStatement = fConnection.prepareStatement(fSQL.toString());
-		fCloser.add(fPreparedStatement);
+		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString()));
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -106,8 +105,7 @@ public class SQLStatement implements Closeable {
 			throw new IllegalStateException("SQLStatement already open.");
 		}
 
-		fPreparedStatement = fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency);
-		fCloser.add(fPreparedStatement);
+		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency));
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -117,8 +115,7 @@ public class SQLStatement implements Closeable {
 			throw new IllegalStateException("SQLStatement already open.");
 		}
 
-		fPreparedStatement = fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability);
-		fCloser.add(fPreparedStatement);
+		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability));
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -317,8 +314,8 @@ public class SQLStatement implements Closeable {
 		}
 
 		@Override
-		public void addCloseable(Closeable closeable) {
-			fCloser.add(closeable);
+		public <C extends Closeable> C registerCloseable(C closeable) {
+			return fCloser.register(closeable);
 		}
 	}
 

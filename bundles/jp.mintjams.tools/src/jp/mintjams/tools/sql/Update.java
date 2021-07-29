@@ -40,13 +40,12 @@ public class Update implements Closeable {
 	private final Closer fCloser = Closer.newCloser();
 
 	public Update(Builder builder) throws SQLException {
-		SQLStatement statement = SQLStatement.newBuilder()
+		SQLStatement statement = fCloser.register(SQLStatement.newBuilder()
 				.setSource(builder.fStatement)
 				.setVariables(builder.fVariables)
 				.setConnection(builder.fConnection)
 				.setParameterHandler(builder.fParameterHandler)
-				.build();
-		fCloser.add(statement);
+				.build());
 
 		fPreparedStatement = statement.prepare();
 	}

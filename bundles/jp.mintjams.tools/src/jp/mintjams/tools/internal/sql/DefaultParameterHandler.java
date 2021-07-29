@@ -209,7 +209,7 @@ public class DefaultParameterHandler implements ParameterHandler {
 					context.getStatement().setNull(context.getIndex(), context.getType());
 					return;
 				}
-				context.addCloseable(value);
+				context.registerCloseable(value);
 				context.getStatement().setCharacterStream(context.getIndex(), value);
 			}
 		},
@@ -254,7 +254,7 @@ public class DefaultParameterHandler implements ParameterHandler {
 					context.getStatement().setNull(context.getIndex(), context.getType());
 					return;
 				}
-				context.addCloseable(value);
+				context.registerCloseable(value);
 				context.getStatement().setBinaryStream(context.getIndex(), value);
 			}
 		},

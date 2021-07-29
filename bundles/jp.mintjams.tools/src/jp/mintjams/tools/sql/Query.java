@@ -52,13 +52,12 @@ public class Query implements Closeable {
 	public Query(Builder builder) throws SQLException {
 		fResultHandler = builder.fResultHandler;
 
-		SQLStatement statement = SQLStatement.newBuilder()
+		SQLStatement statement = fCloser.register(SQLStatement.newBuilder()
 				.setSource(builder.fStatement)
 				.setVariables(builder.fVariables)
 				.setConnection(builder.fConnection)
 				.setParameterHandler(builder.fParameterHandler)
-				.build();
-		fCloser.add(statement);
+				.build());
 
 		fPreparedStatement = statement.prepare(
 				ResultSet.TYPE_FORWARD_ONLY,
@@ -108,8 +107,7 @@ public class Query implements Closeable {
 	}
 
 	public Result execute() throws SQLException {
-		ResultSetIteratorImpl resultSetIterator = new ResultSetIteratorImpl(fPreparedStatement.executeQuery());
-		fCloser.add(resultSetIterator);
+		ResultSetIteratorImpl resultSetIterator = fCloser.register(new ResultSetIteratorImpl(fPreparedStatement.executeQuery()));
 		return resultSetIterator;
 	}
 
@@ -211,8 +209,7 @@ public class Query implements Closeable {
 		};
 
 		private ResultSetIteratorImpl(ResultSet resultSet) throws SQLException {
-			fResultSet = resultSet;
-			fCloser.add(fResultSet);
+			fResultSet = fCloser.register(resultSet);
 			fMetadata = resultSet.getMetaData();
 
 			try {
@@ -250,8 +247,8 @@ public class Query implements Closeable {
 			}
 
 			@Override
-			public void addCloseable(Closeable closeable) {
-				fCloser.add(closeable);
+			public <C extends Closeable> C registerCloseable(C closeable) {
+				return fCloser.register(closeable);
 			}
 		}
 	}

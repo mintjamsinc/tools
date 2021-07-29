@@ -184,7 +184,7 @@ public class DefaultResultHandler implements ResultHandler {
 			public Object getValue(ResultContext context, int columnIndex) throws SQLException {
 				Reader value = context.getResultSet().getCharacterStream(columnIndex);
 				if (value != null) {
-					context.addCloseable(value);
+					context.registerCloseable(value);
 				}
 				if (context.getResultSet().wasNull()) {
 					return null;
@@ -248,7 +248,7 @@ public class DefaultResultHandler implements ResultHandler {
 			public Object getValue(ResultContext context, int columnIndex) throws SQLException {
 				InputStream value = context.getResultSet().getBinaryStream(columnIndex);
 				if (value != null) {
-					context.addCloseable(value);
+					context.registerCloseable(value);
 				}
 				if (context.getResultSet().wasNull()) {
 					return null;
@@ -306,9 +306,7 @@ public class DefaultResultHandler implements ResultHandler {
 					return null;
 				}
 
-				InputStream value = blob.getBinaryStream();
-				context.addCloseable(value);
-				return value;
+				return context.registerCloseable(blob.getBinaryStream());
 			}
 		},
 		CLOB(Types.CLOB) {
@@ -319,9 +317,7 @@ public class DefaultResultHandler implements ResultHandler {
 					return null;
 				}
 
-				Reader value = blob.getCharacterStream();
-				context.addCloseable(value);
-				return value;
+				return context.registerCloseable(blob.getCharacterStream());
 			}
 		},
 		REF(Types.REF) {

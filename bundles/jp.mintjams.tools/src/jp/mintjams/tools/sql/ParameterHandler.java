@@ -40,7 +40,7 @@ public interface ParameterHandler {
 		Object getValue();
 		int getType();
 		Map<String, String> getOptions();
-		void addCloseable(Closeable closeable);
+		<C extends Closeable> C registerCloseable(C closeable);
 	}
 
 }
