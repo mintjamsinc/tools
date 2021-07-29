@@ -100,8 +100,8 @@ public class SQLStatement implements Closeable, Adaptable {
 			throw new IllegalStateException("SQLStatement already open.");
 		}
 
-		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString()));
 		compile();
+		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString()));
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -111,8 +111,8 @@ public class SQLStatement implements Closeable, Adaptable {
 			throw new IllegalStateException("SQLStatement already open.");
 		}
 
-		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency));
 		compile();
+		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency));
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -122,8 +122,8 @@ public class SQLStatement implements Closeable, Adaptable {
 			throw new IllegalStateException("SQLStatement already open.");
 		}
 
-		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability));
 		compile();
+		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability));
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
