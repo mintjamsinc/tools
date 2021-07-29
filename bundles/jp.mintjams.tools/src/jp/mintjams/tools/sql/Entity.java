@@ -213,7 +213,12 @@ public class Entity {
 			} else {
 				where.append(" AND ");
 			}
-			where.append(info.getName()).append(" = {{").append(info.getName().toLowerCase()).append("}}");
+			where.append(info.getName());
+			if (variables.get(info.getName().toLowerCase()) == null) {
+				where.append(" IS NULL");
+			} else {
+				where.append(" = {{").append(info.getName().toLowerCase()).append("}}");
+			}
 		}
 		sql.append(where);
 
@@ -344,9 +349,13 @@ public class Entity {
 			} else {
 				sql.append(" AND ");
 			}
-			sql.append(info.getName()).append(" = ");
-			sql.append("{{__condition__").append(info.getName().toLowerCase()).append("}}");
-			variables.put("__condition__" + info.getName().toLowerCase(), cnds.get(info.getName().toLowerCase()));
+			sql.append(info.getName());
+			if (cnds.get(info.getName().toLowerCase()) == null) {
+				sql.append(" IS NULL");
+			} else {
+				sql.append(" = ").append("{{__condition__").append(info.getName().toLowerCase()).append("}}");
+				variables.put("__condition__" + info.getName().toLowerCase(), cnds.get(info.getName().toLowerCase()));
+			}
 			i++;
 		}
 
@@ -398,8 +407,12 @@ public class Entity {
 			} else {
 				sql.append(" AND ");
 			}
-			sql.append(info.getName()).append(" = ");
-			sql.append("{{").append(info.getName().toLowerCase()).append("}}");
+			sql.append(info.getName());
+			if (variables.get(info.getName().toLowerCase()) == null) {
+				sql.append(" IS NULL");
+			} else {
+				sql.append(" = ").append("{{").append(info.getName().toLowerCase()).append("}}");
+			}
 			i++;
 		}
 
