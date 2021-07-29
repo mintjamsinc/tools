@@ -22,45 +22,52 @@
 
 package jp.mintjams.tools.sql;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 import jp.mintjams.tools.internal.sql.SQLStatement;
-import jp.mintjams.tools.io.Closer;
 
-public class Update implements Closeable {
+public class Update {
 
-	private PreparedStatement fPreparedStatement;
-	private final Closer fCloser = Closer.newCloser();
+	private final String fStatement;
+	private final Map<String, Object> fVariables = new HashMap<>();
+	private final Connection fConnection;
+	private final ParameterHandler fParameterHandler;
 
-	public Update(Builder builder) throws SQLException {
-		SQLStatement statement = fCloser.register(SQLStatement.newBuilder()
-				.setSource(builder.fStatement)
-				.setVariables(builder.fVariables)
-				.setConnection(builder.fConnection)
-				.setParameterHandler(builder.fParameterHandler)
-				.build());
-
-		fPreparedStatement = statement.prepare();
+	public Update(Builder builder) {
+		fStatement = builder.fStatement;
+		fVariables.putAll(builder.fVariables);
+		fConnection = builder.fConnection;
+		fParameterHandler = builder.fParameterHandler;
 	}
 
-	@Override
-	public void close() throws IOException {
-		fCloser.close();
+	private SQLStatement prepare() {
+		return SQLStatement.newBuilder()
+				.setSource(fStatement)
+				.setVariables(fVariables)
+				.setConnection(fConnection)
+				.setParameterHandler(fParameterHandler)
+				.build();
 	}
 
 	public int execute() throws SQLException {
-		return fPreparedStatement.executeUpdate();
+		try (SQLStatement stmt = prepare()) {
+			return stmt.prepare().executeUpdate();
+		} catch (IOException ex) {
+			throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+		}
 	}
 
 	public long executeLarge() throws SQLException {
-		return fPreparedStatement.executeLargeUpdate();
+		try (SQLStatement stmt = prepare()) {
+			return stmt.prepare().executeLargeUpdate();
+		} catch (IOException ex) {
+			throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+		}
 	}
 
 	public static Builder newBuilder() {

@@ -22,6 +22,7 @@
 
 package jp.mintjams.tools.internal.sql;
 
+import java.beans.Statement;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
@@ -39,13 +40,16 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jp.mintjams.tools.adapter.Adaptable;
 import jp.mintjams.tools.io.Closer;
 import jp.mintjams.tools.sql.ParameterHandler;
 import jp.mintjams.tools.sql.ParameterHandler.ParameterContext;
 
-public class SQLStatement implements Closeable {
+public class SQLStatement implements Closeable, Adaptable {
 
-	private Connection fConnection;
+	private final String fSource;
+	private final Map<String, Object> fVariableMap = new HashMap<>();
+	private final Connection fConnection;
 	private StringBuilder fSQL = new StringBuilder();
 	private List<SQLVariable> fSQLVariableList = new ArrayList<>();
 	private ParameterHandler fParameterHandler;
@@ -53,26 +57,27 @@ public class SQLStatement implements Closeable {
 	private PreparedStatement fPreparedStatement;
 
 	private SQLStatement(Builder builder) {
+		fSource = builder.fSource;
+		fVariableMap.putAll(builder.fVariableMap);
 		fConnection = builder.fConnection;
 		fParameterHandler = builder.fParameterHandler;
 		if (fParameterHandler == null) {
 			fParameterHandler = new DefaultParameterHandler();
 		}
-		compile(builder);
 	}
 
-	private void compile(Builder builder) {
+	private void compile() {
 		int parameterIndex = 0;
-		Matcher m = Pattern.compile("\\{{2}[^{}]+?\\}{2}").matcher(builder.fSource);
+		Matcher m = Pattern.compile("\\{{2}[^{}]+?\\}{2}").matcher(fSource);
 		int p = 0;
 		while (m.find()) {
-			fSQL.append(builder.fSource.substring(p, m.start()));
+			fSQL.append(fSource.substring(p, m.start()));
 			p = m.end();
 
 			String variableString = m.group();
 			variableString = variableString.substring(2, variableString.length() - 2);
 			String[] nameAndOptions = variableString.trim().split(";");
-			Object value = builder.fVariableMap.get(nameAndOptions[0]);
+			Object value = fVariableMap.get(nameAndOptions[0]);
 			if (value instanceof List) {
 				List<?> values = (List<?>) value;
 				for (int i = 0; i < values.size(); i++) {
@@ -87,7 +92,7 @@ public class SQLStatement implements Closeable {
 				fSQLVariableList.add(new SQLVariable(++parameterIndex, nameAndOptions, value));
 			}
 		}
-		fSQL.append(builder.fSource.substring(p));
+		fSQL.append(fSource.substring(p));
 	}
 
 	public PreparedStatement prepare() throws SQLException {
@@ -96,6 +101,7 @@ public class SQLStatement implements Closeable {
 		}
 
 		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString()));
+		compile();
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -106,6 +112,7 @@ public class SQLStatement implements Closeable {
 		}
 
 		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency));
+		compile();
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -116,6 +123,7 @@ public class SQLStatement implements Closeable {
 		}
 
 		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability));
+		compile();
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -131,6 +139,18 @@ public class SQLStatement implements Closeable {
 	public void close() throws IOException {
 		fCloser.close();
 		fPreparedStatement = null;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <AdapterType> AdapterType adaptTo(Class<AdapterType> adapterType) {
+		Objects.requireNonNull(adapterType);
+
+		if (adapterType.equals(Statement.class) || adapterType.equals(PreparedStatement.class)) {
+			return (AdapterType) fPreparedStatement;
+		}
+
+		return null;
 	}
 
 	public static Builder newBuilder() {
@@ -168,7 +188,7 @@ public class SQLStatement implements Closeable {
 			return this;
 		}
 
-		public SQLStatement build() throws SQLException {
+		public SQLStatement build() {
 			Objects.requireNonNull(fSource);
 			Objects.requireNonNull(fConnection);
 			return new SQLStatement(this);

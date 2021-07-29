@@ -41,34 +41,34 @@ import jp.mintjams.tools.internal.sql.SQLStatement;
 import jp.mintjams.tools.io.Closer;
 import jp.mintjams.tools.sql.ResultHandler.ResultContext;
 
-public class Query implements Closeable {
+public class Query {
 
+	private final String fStatement;
+	private final Map<String, Object> fVariables = new HashMap<>();
+	private final Connection fConnection;
+	private final ParameterHandler fParameterHandler;
 	private ResultHandler fResultHandler;
-	private PreparedStatement fPreparedStatement;
-	private final Closer fCloser = Closer.newCloser();
 	private Integer fOffset;
 	private Integer fLimit;
+	private String fCursorName;
+	private Integer fFetchDirection;
+	private Integer fFetchSize;
 
-	public Query(Builder builder) throws SQLException {
+	public Query(Builder builder) {
+		fStatement = builder.fStatement;
+		fVariables.putAll(builder.fVariables);
+		fConnection = builder.fConnection;
+		fParameterHandler = builder.fParameterHandler;
 		fResultHandler = builder.fResultHandler;
-
-		SQLStatement statement = fCloser.register(SQLStatement.newBuilder()
-				.setSource(builder.fStatement)
-				.setVariables(builder.fVariables)
-				.setConnection(builder.fConnection)
-				.setParameterHandler(builder.fParameterHandler)
-				.build());
-
-		fPreparedStatement = statement.prepare(
-				ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_READ_ONLY,
-				ResultSet.HOLD_CURSORS_OVER_COMMIT);
-		fPreparedStatement.setFetchSize(1000);
 	}
 
-	@Override
-	public void close() throws IOException {
-		fCloser.close();
+	private SQLStatement prepare() throws SQLException {
+		return SQLStatement.newBuilder()
+				.setSource(fStatement)
+				.setVariables(fVariables)
+				.setConnection(fConnection)
+				.setParameterHandler(fParameterHandler)
+				.build();
 	}
 
 	public Query setOffset(int offset) throws SQLException {
@@ -81,34 +81,54 @@ public class Query implements Closeable {
 		return this;
 	}
 
-	public Query closeOnCompletion() throws SQLException {
-		fPreparedStatement.closeOnCompletion();
-		return this;
-	}
-
 	public Query setCursorName(String name) throws SQLException {
-		fPreparedStatement.setCursorName(name);
-		return this;
-	}
-
-	public Query setMaxRows(int max) throws SQLException {
-		fPreparedStatement.setMaxRows(max);
+		fCursorName = name;
 		return this;
 	}
 
 	public Query setFetchDirection(int direction) throws SQLException {
-		fPreparedStatement.setFetchDirection(direction);
+		fFetchDirection = direction;
 		return this;
 	}
 
 	public Query setFetchSize(int rows) throws SQLException {
-		fPreparedStatement.setFetchSize(rows);
+		fFetchSize = rows;
 		return this;
 	}
 
 	public Result execute() throws SQLException {
-		ResultSetIteratorImpl resultSetIterator = fCloser.register(new ResultSetIteratorImpl(fPreparedStatement.executeQuery()));
-		return resultSetIterator;
+		SQLStatement stmt = null;
+		ResultSet rs = null;
+		try {
+			stmt = prepare();
+
+			PreparedStatement p = stmt.prepare(
+					ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_READ_ONLY,
+					ResultSet.HOLD_CURSORS_OVER_COMMIT);
+			if (fCursorName != null) {
+				p.setCursorName(fCursorName);
+			}
+			if (fFetchDirection != null) {
+				p.setFetchDirection(fFetchDirection);
+			}
+			p.setFetchSize((fFetchSize != null) ? fFetchSize : 1000);
+
+			rs = p.executeQuery();
+		} catch (Throwable ex) {
+			try {
+				rs.close();
+			} catch (Throwable ignore) {}
+			try {
+				stmt.close();
+			} catch (Throwable ignore) {}
+
+			if (ex instanceof SQLException) {
+				throw ex;
+			}
+			throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+		}
+		return new ResultSetIteratorImpl(rs, stmt);
 	}
 
 	public static Builder newBuilder() {
@@ -208,9 +228,10 @@ public class Query implements Closeable {
 			}
 		};
 
-		private ResultSetIteratorImpl(ResultSet resultSet) throws SQLException {
-			fResultSet = fCloser.register(resultSet);
-			fMetadata = resultSet.getMetaData();
+		private ResultSetIteratorImpl(ResultSet rs, SQLStatement stmt) throws SQLException {
+			fCloser.register(stmt);
+			fResultSet = fCloser.register(rs);
+			fMetadata = fResultSet.getMetaData();
 
 			try {
 				int offset = (fOffset == null) ? 0 : fOffset;
