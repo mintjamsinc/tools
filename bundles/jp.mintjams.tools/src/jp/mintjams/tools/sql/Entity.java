@@ -173,20 +173,11 @@ public class Entity {
 	}
 
 	public Query findByPrimaryKey(Map<String, Object> conditions) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(conditions);
+		Map<String, Object> variables = normalizeKey(conditions);
 
-		StringBuffer sql = new StringBuffer();
+		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT * FROM ").append(fTableName);
-		StringBuffer where = new StringBuffer();
-		for (ColumnInfo info : fPrimaryKeyList) {
-			if (where.length() == 0) {
-				where.append(" WHERE ");
-			} else {
-				where.append(" AND ");
-			}
-			where.append(info.getName()).append(" = {{").append(info.getName().toLowerCase()).append("}}");
-		}
-		sql.append(where);
+		sql.append(createWhereClause(variables, true));
 
 		return Query.newBuilder()
 				.setStatement(sql.toString())
@@ -198,33 +189,15 @@ public class Entity {
 	}
 
 	public Query find(Map<String, Object> conditions) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(conditions);
+		Map<String, Object> variables = normalizeKey(conditions);
 
-		StringBuffer sql = new StringBuffer();
+		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT * FROM ").append(fTableName);
-		StringBuffer where = new StringBuffer();
-		for (ColumnInfo info : fColumnList) {
-			if (!variables.containsKey(info.getName().toLowerCase())) {
-				continue;
-			}
-
-			if (where.length() == 0) {
-				where.append(" WHERE ");
-			} else {
-				where.append(" AND ");
-			}
-			where.append(info.getName());
-			if (variables.get(info.getName().toLowerCase()) == null) {
-				where.append(" IS NULL");
-			} else {
-				where.append(" = {{").append(info.getName().toLowerCase()).append("}}");
-			}
-		}
-		sql.append(where);
+		sql.append(createWhereClause(variables, false));
 
 		return Query.newBuilder()
 				.setStatement(sql.toString())
-				.setVariables(toLowerCaseKey(variables))
+				.setVariables(variables)
 				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.setResultHandler(fResultHandler)
@@ -232,16 +205,17 @@ public class Entity {
 	}
 
 	public Update create(Map<String, Object> values) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(values);
+		Map<String, Object> variables = normalizeKey(values);
 
 		List<String> insertNameList = new ArrayList<>();
 		for (ColumnInfo info : fColumnList) {
-			if (variables.containsKey(info.getName().toLowerCase())) {
+			String varName = info.getName().toLowerCase();
+			if (variables.containsKey(varName)) {
 				insertNameList.add(info.getName());
 			}
 		}
 
-		StringBuffer sql = new StringBuffer();
+		StringBuilder sql = new StringBuilder();
 		sql.append("INSERT INTO ").append(fTableName);
 		for (int i = 0; i < insertNameList.size(); i++) {
 			if (i == 0) {
@@ -263,143 +237,120 @@ public class Entity {
 
 		return Update.newBuilder()
 				.setStatement(sql.toString())
-				.setVariables(toLowerCaseKey(variables))
+				.setVariables(variables)
 				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
 
-	public Update updateByPrimaryKey(Map<String, Object> values, Map<String, Object> conditions) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(values);
-		Map<String, Object> cnds = toLowerCaseKey(conditions);
+	public Update updateByPrimaryKey(Map<String, Object> updates, Map<String, Object> conditions) throws SQLException {
+		Map<String, Object> variables = normalizeKey(updates);
+		Map<String, Object> cnds = normalizeKey(conditions);
 
-		List<String> updateNameList = new ArrayList<>();
-		for (ColumnInfo info : fColumnList) {
-			if (variables.containsKey(info.getName().toLowerCase())) {
-				updateNameList.add(info.getName());
-			}
-		}
-
-		StringBuffer sql = new StringBuffer();
+		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ").append(fTableName);
-		for (int i = 0; i < updateNameList.size(); i++) {
-			if (i == 0) {
-				sql.append(" SET ");
-			} else {
-				sql.append(", ");
-			}
-			sql.append(updateNameList.get(i)).append(" = ");
-			sql.append("{{").append(updateNameList.get(i).toLowerCase()).append("}}");
-		}
-		int i = 0;
-		for (ColumnInfo info : fPrimaryKeyList) {
-			if (!cnds.containsKey(info.getName().toLowerCase())) {
-				continue;
-			}
-
-			if (i == 0) {
-				sql.append(" WHERE ");
-			} else {
-				sql.append(" AND ");
-			}
-			sql.append(info.getName()).append(" = ");
-			sql.append("{{__condition__").append(info.getName().toLowerCase()).append("}}");
-			variables.put("__condition__" + info.getName().toLowerCase(), cnds.get(info.getName().toLowerCase()));
-			i++;
-		}
+		sql.append(createSetCommand(variables));
+		sql.append(createWhereClause(variables, cnds, true));
 
 		return Update.newBuilder()
 				.setStatement(sql.toString())
-				.setVariables(toLowerCaseKey(variables))
+				.setVariables(variables)
 				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
 
-	public Update update(Map<String, Object> values, Map<String, Object> conditions) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(values);
-		Map<String, Object> cnds = toLowerCaseKey(conditions);
+	public Update update(Map<String, Object> updates, Map<String, Object> conditions) throws SQLException {
+		Map<String, Object> variables = normalizeKey(updates);
+		Map<String, Object> cnds = normalizeKey(conditions);
 
-		List<String> updateNameList = new ArrayList<>();
-		for (ColumnInfo info : fColumnList) {
-			if (variables.containsKey(info.getName().toLowerCase())) {
-				updateNameList.add(info.getName());
-			}
-		}
-
-		StringBuffer sql = new StringBuffer();
+		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ").append(fTableName);
-		for (int i = 0; i < updateNameList.size(); i++) {
-			if (i == 0) {
-				sql.append(" SET ");
-			} else {
-				sql.append(", ");
-			}
-			sql.append(updateNameList.get(i)).append(" = ");
-			sql.append("{{").append(updateNameList.get(i).toLowerCase()).append("}}");
-		}
-		int i = 0;
-		for (ColumnInfo info : fColumnList) {
-			if (!cnds.containsKey(info.getName().toLowerCase())) {
-				continue;
-			}
-
-			if (i == 0) {
-				sql.append(" WHERE ");
-			} else {
-				sql.append(" AND ");
-			}
-			sql.append(info.getName());
-			if (cnds.get(info.getName().toLowerCase()) == null) {
-				sql.append(" IS NULL");
-			} else {
-				sql.append(" = ").append("{{__condition__").append(info.getName().toLowerCase()).append("}}");
-				variables.put("__condition__" + info.getName().toLowerCase(), cnds.get(info.getName().toLowerCase()));
-			}
-			i++;
-		}
+		sql.append(createSetCommand(variables));
+		sql.append(createWhereClause(variables, cnds, false));
 
 		return Update.newBuilder()
 				.setStatement(sql.toString())
-				.setVariables(toLowerCaseKey(variables))
+				.setVariables(variables)
 				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
 
 	public Update deleteByPrimaryKey(Map<String, Object> conditions) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(conditions);
+		Map<String, Object> variables = normalizeKey(conditions);
 
-		StringBuffer sql = new StringBuffer();
+		StringBuilder sql = new StringBuilder();
 		sql.append("DELETE FROM ").append(fTableName);
-		for (int i = 0; i < fPrimaryKeyList.size(); i++) {
-			ColumnInfo info = fPrimaryKeyList.get(i);
-			if (i == 0) {
-				sql.append(" WHERE ");
-			} else {
-				sql.append(" AND ");
-			}
-			sql.append(info.getName()).append(" = ");
-			sql.append("{{").append(info.getName().toLowerCase()).append("}}");
-		}
+		sql.append(createWhereClause(variables, true));
 
 		return Update.newBuilder()
 				.setStatement(sql.toString())
-				.setVariables(toLowerCaseKey(variables))
+				.setVariables(variables)
 				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
 
 	public Update delete(Map<String, Object> conditions) throws SQLException {
-		Map<String, Object> variables = toLowerCaseKey(conditions);
+		Map<String, Object> variables = normalizeKey(conditions);
 
-		StringBuffer sql = new StringBuffer();
+		StringBuilder sql = new StringBuilder();
 		sql.append("DELETE FROM ").append(fTableName);
+		sql.append(createWhereClause(variables, false));
+
+		return Update.newBuilder()
+				.setStatement(sql.toString())
+				.setVariables(variables)
+				.setConnection(fConnection)
+				.setParameterHandler(fParameterHandler)
+				.build();
+	}
+
+	private Map<String, Object> normalizeKey(Map<String, Object> map) {
+		Map<String, Object> result = new HashMap<>();
+		for (Map.Entry<String, Object> e : map.entrySet()) {
+			result.put(e.getKey().toLowerCase(), e.getValue());
+		}
+		return result;
+	}
+
+	private String createSetCommand(Map<String, Object> variables) {
+		StringBuilder sql = new StringBuilder();
 		int i = 0;
 		for (ColumnInfo info : fColumnList) {
-			if (!variables.containsKey(info.getName().toLowerCase())) {
+			String varName = info.getName().toLowerCase();
+			if (!variables.containsKey(varName)) {
 				continue;
+			}
+
+			if (i == 0) {
+				sql.append(" SET ");
+			} else {
+				sql.append(", ");
+			}
+			sql.append(info.getName()).append(" = ").append("{{").append(varName).append("}}");
+			i++;
+		}
+		return sql.toString();
+	}
+
+	private String createWhereClause(Map<String, Object> variables, boolean primaryKeys) {
+		return createWhereClause(variables, null, primaryKeys);
+	}
+
+	private String createWhereClause(Map<String, Object> variables, Map<String, Object> cnds, boolean primaryKeys) {
+		StringBuilder sql = new StringBuilder();
+		int i = 0;
+		for (ColumnInfo info : (primaryKeys ? fPrimaryKeyList : fColumnList)) {
+			String varName = info.getName().toLowerCase();
+
+			if (!(Objects.isNull(cnds) ? variables : cnds).containsKey(varName)) {
+				if (!primaryKeys) {
+					continue;
+				}
+
+				throw new IllegalArgumentException(info.getName() + " must be specified.");
 			}
 
 			if (i == 0) {
@@ -408,28 +359,18 @@ public class Entity {
 				sql.append(" AND ");
 			}
 			sql.append(info.getName());
-			if (variables.get(info.getName().toLowerCase()) == null) {
+			if ((Objects.isNull(cnds) ? variables : cnds).get(varName) == null) {
 				sql.append(" IS NULL");
 			} else {
-				sql.append(" = ").append("{{").append(info.getName().toLowerCase()).append("}}");
+				String cndName = !Objects.isNull(cnds) ? ("@cnd@" + varName) : varName;
+				sql.append(" = ").append("{{").append(cndName).append("}}");
+				if (!Objects.isNull(cnds)) {
+					variables.put(cndName, cnds.get(varName));
+				}
 			}
 			i++;
 		}
-
-		return Update.newBuilder()
-				.setStatement(sql.toString())
-				.setVariables(toLowerCaseKey(variables))
-				.setConnection(fConnection)
-				.setParameterHandler(fParameterHandler)
-				.build();
-	}
-
-	private Map<String, Object> toLowerCaseKey(Map<String, Object> map) {
-		Map<String, Object> result = new HashMap<>();
-		for (Map.Entry<String, Object> e : map.entrySet()) {
-			result.put(e.getKey().toLowerCase(), e.getValue());
-		}
-		return result;
+		return sql.toString();
 	}
 
 	public static Builder newBuilder() {
