@@ -32,6 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -78,14 +79,20 @@ public class SQLStatement implements Closeable, Adaptable {
 			variableString = variableString.substring(2, variableString.length() - 2);
 			String[] nameAndOptions = variableString.trim().split(";");
 			Object value = fVariableMap.get(nameAndOptions[0]);
-			if (value instanceof List) {
-				List<?> values = (List<?>) value;
-				for (int i = 0; i < values.size(); i++) {
+			if (value instanceof Collection || value.getClass().isArray()) {
+				Object[] values;
+				if (value instanceof Collection) {
+					values = ((Collection<?>) value).toArray();
+				} else {
+					values = (Object[]) value;
+				}
+
+				for (int i = 0; i < values.length; i++) {
 					if (i > 0) {
 						fSQL.append(",");
 					}
 					fSQL.append("?");
-					fSQLVariableList.add(new SQLVariable(++parameterIndex, nameAndOptions, values.get(i)));
+					fSQLVariableList.add(new SQLVariable(++parameterIndex, nameAndOptions, values[i]));
 				}
 			} else {
 				fSQL.append("?");
