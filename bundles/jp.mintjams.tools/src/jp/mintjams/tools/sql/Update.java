@@ -71,11 +71,15 @@ public class Update {
 	}
 
 	public static Builder newBuilder() {
-		return new Builder();
+		return Builder.create();
 	}
 
 	public static class Builder {
 		private Builder() {}
+
+		public static Builder create() {
+			return new Builder();
+		}
 
 		private String fStatement;
 		public Builder setStatement(String statement) {

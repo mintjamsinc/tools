@@ -306,7 +306,7 @@ public class AdaptableList<E> implements List<E> {
 	}
 
 	public static <E> Builder<E> newBuilder() {
-		return new Builder<>();
+		return Builder.<E>create();
 	}
 
 	public static class Builder<E> {
@@ -337,6 +337,10 @@ public class AdaptableList<E> implements List<E> {
 			fValueAdapterMap.put(LocalDate.class, LocalDateValueAdapter.class);
 			fValueAdapterMap.put(OffsetTime.class, OffsetTimeValueAdapter.class);
 			fValueAdapterMap.put(LocalTime.class, LocalTimeValueAdapter.class);
+		}
+
+		public static <E> Builder<E> create() {
+			return new Builder<>();
 		}
 
 		public <ValueType> Builder<E> setValueAdapter(Class<ValueType> valueType, Class<ValueAdapter<ValueType>> valueAdapterType) {

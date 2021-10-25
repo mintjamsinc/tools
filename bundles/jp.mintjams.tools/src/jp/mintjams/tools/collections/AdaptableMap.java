@@ -238,7 +238,7 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 	}
 
 	public static <K, V> Builder<K, V> newBuilder() {
-		return new Builder<>();
+		return Builder.<K, V>create();
 	}
 
 	public static class Builder<K, V> {
@@ -269,6 +269,10 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 			fValueAdapterMap.put(LocalDate.class, LocalDateValueAdapter.class);
 			fValueAdapterMap.put(OffsetTime.class, OffsetTimeValueAdapter.class);
 			fValueAdapterMap.put(LocalTime.class, LocalTimeValueAdapter.class);
+		}
+
+		public static <K, V> Builder<K, V> create() {
+			return new Builder<>();
 		}
 
 		public <ValueType> Builder<K, V> setValueAdapter(Class<ValueType> valueType, Class<ValueAdapter<ValueType>> valueAdapterType) {
