@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+Automatic-Module-Name: jp.mintjams.tools
 Bundle-ManifestVersion: 2
 Bundle-Name: %Plugin.name
 Bundle-SymbolicName: jp.mintjams.tools
