@@ -128,7 +128,7 @@ public class Query {
 			}
 			throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 		}
-		return new ResultSetIteratorImpl(rs, stmt);
+		return new ResultImpl(rs, stmt);
 	}
 
 	public static Builder newBuilder() {
@@ -185,7 +185,7 @@ public class Query {
 
 	public interface Result extends Iterable<AdaptableMap<String, Object>>, Closeable {}
 
-	private class ResultSetIteratorImpl implements Result {
+	private class ResultImpl implements Result {
 		private final ResultSet fResultSet;
 		private final ResultSetMetaData fMetadata;
 		private final Closer fCloser = Closer.newCloser();
@@ -232,7 +232,7 @@ public class Query {
 			}
 		};
 
-		private ResultSetIteratorImpl(ResultSet rs, SQLStatement stmt) throws SQLException {
+		private ResultImpl(ResultSet rs, SQLStatement stmt) throws SQLException {
 			fCloser.register(stmt);
 			fResultSet = fCloser.register(rs);
 			fMetadata = fResultSet.getMetaData();
