@@ -45,7 +45,7 @@ public class Entity {
 	private final List<ColumnInfo> fPrimaryKeyList = new ArrayList<>();
 	private final Map<String, Integer> fPrimaryKeyMap = new HashMap<>();
 
-	public Entity(Builder builder) throws SQLException {
+	private Entity(Builder builder) throws SQLException {
 		fConnection = builder.fConnection;
 		fParameterHandler = builder.fParameterHandler;
 		fResultHandler = builder.fResultHandler;

@@ -73,7 +73,7 @@ public class AdaptableList<E> implements List<E> {
 	private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap;
 	private final Map<String, Object> fEnv;
 
-	public AdaptableList(Builder<E> builder) {
+	private AdaptableList(Builder<E> builder) {
 		fList = builder.fList;
 		fValueAdapterMap = builder.fValueAdapterMap;
 		fEnv = builder.fEnv;

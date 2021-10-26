@@ -38,7 +38,7 @@ public class Update {
 	private final Connection fConnection;
 	private final ParameterHandler fParameterHandler;
 
-	public Update(Builder builder) {
+	private Update(Builder builder) {
 		fStatement = builder.fStatement;
 		fVariables.putAll(builder.fVariables);
 		fConnection = builder.fConnection;

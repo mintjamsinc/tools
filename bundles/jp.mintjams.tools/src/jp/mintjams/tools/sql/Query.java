@@ -54,7 +54,7 @@ public class Query {
 	private Integer fFetchDirection;
 	private Integer fFetchSize;
 
-	public Query(Builder builder) {
+	private Query(Builder builder) {
 		fStatement = builder.fStatement;
 		fVariables.putAll(builder.fVariables);
 		fConnection = builder.fConnection;
