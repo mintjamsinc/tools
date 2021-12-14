@@ -65,6 +65,9 @@ public class SessionBuilder {
 			if (port != -1) {
 				properties.put("mail." + protocol + ".port", "" + port);
 			}
+			if ("imap".equals(protocol) || "imaps".equals(protocol)) {
+				properties.put("mail." + protocol + ".peek", "true");
+			}
 			boolean sslEnabled = "imaps".equals(protocol) || "pop3s".equals(protocol) || "smtps".equals(protocol);
 			if ("smtps".equals(protocol)) {
 				properties.put("mail.smtp.starttls.enable", "true");
@@ -72,6 +75,8 @@ public class SessionBuilder {
 			} else {
 				properties.put("mail." + protocol + ".ssl.enable", "" + sslEnabled);
 			}
+			properties.put("mail." + protocol + ".timeout", "" + 5000);
+			properties.put("mail." + protocol + ".connectiontimeout", "" + 5000);
 			if (sslEnabled) {
 				SSLContext ctx = fSSLContext;
 				if (ctx == null) {

@@ -32,6 +32,7 @@ import javax.mail.internet.ContentType;
 public class Charsets {
 
 	public static final String UTF8 = "UTF-8";
+	public static final String ISO2022JP = "ISO-2022-JP";
 
 	public static String from(Part part) throws MessagingException {
 		Objects.requireNonNull(part);
@@ -46,12 +47,21 @@ public class Charsets {
 			}
 		}
 
-		String charset = UTF8;
-		String contentTransferEncoding = part.getHeader("Content-Transfer-Encoding")[0];
-		if ("7bit".equalsIgnoreCase(contentTransferEncoding)) {
-			charset = "ISO-2022-JP";
+		String encoding = null;
+		try {
+			encoding = part.getHeader("Content-Transfer-Encoding")[0];
+		} catch (Throwable ignore) {}
+
+		if (encoding != null) {
+			if ("7bit".equalsIgnoreCase(encoding)) {
+				return ISO2022JP;
+			}
+			if ("8bit".equalsIgnoreCase(encoding)) {
+				return UTF8;
+			}
 		}
-		return charset;
+
+		return UTF8;
 	}
 
 	public static String from(ContentType contentType, String defaultCharset) {

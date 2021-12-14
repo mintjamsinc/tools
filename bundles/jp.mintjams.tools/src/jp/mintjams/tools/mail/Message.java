@@ -24,18 +24,30 @@ package jp.mintjams.tools.mail;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
+import javax.activation.DataHandler;
 import javax.mail.Address;
+import javax.mail.BodyPart;
 import javax.mail.Flags;
 import javax.mail.Message.RecipientType;
 import javax.mail.MessagingException;
@@ -45,34 +57,39 @@ import javax.mail.Session;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MailDateFormat;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimePart;
 import javax.mail.internet.MimeUtility;
 
 import jp.mintjams.tools.internal.mail.Charsets;
+import jp.mintjams.tools.internal.mail.InputStreamDataSource;
 import jp.mintjams.tools.internal.mail.SessionBuilder;
+import jp.mintjams.tools.io.Closer;
 
-public class Message {
+public class Message implements Closeable {
 
-	private final MimeMessage fMessage;
+	private final Closer fCloser = Closer.newCloser();
+	private MimeMessage fMessage;
+	private MimeHeaders fMimeHeaders;
+	private final Map<String, String> fContents = new HashMap<>();
 	private final List<Part> fParts = new ArrayList<>();
+	private Integer fMessageNumber;
 
-	private Message(MimeMessage message) throws MessagingException {
+	private Message(MimeMessage message) throws MessagingException, IOException {
 		fMessage = message;
+		fMimeHeaders = null;
 		prepare(fMessage);
 	}
 
-	public static Message create() throws MessagingException {
-		Session session;
-		try {
-			session = SessionBuilder.create().build();
-		} catch (Throwable ex) {
-			throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
-		}
-		MimeMessage message = new MimeMessage(session);
+	public static Message create() throws MessagingException, IOException {
+		MimeMessage message = createEmptyMessage(newSession());
+		message.setFlag(Flags.Flag.DRAFT, true);
 		return new Message(message);
 	}
 
-	public static Message from(javax.mail.Message message) throws MessagingException {
+	public static Message from(javax.mail.Message message) throws MessagingException, IOException {
 		Objects.requireNonNull(message);
 		return new Message((MimeMessage) message);
 	}
@@ -80,15 +97,37 @@ public class Message {
 	public static Message from(InputStream in) throws MessagingException {
 		Objects.requireNonNull(in);
 		try (in) {
-			Session session;
-			try {
-				session = SessionBuilder.create().build();
-			} catch (Throwable ex) {
-				throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
-			}
-			MimeMessage message = new MimeMessage(session, in);
+			MimeMessage message = new MimeMessage(newSession(), in);
 			return new Message(message);
 		} catch (IOException ex) {
+			throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
+		}
+	}
+
+	public static MimeMessage createEmptyMessage(Session session) throws MessagingException {
+		MimeMessage message = new MimeMessage(session);
+		message.setSubject("");
+		ContentType type = new ContentType("text/plain");
+		type.setParameter("charset", Charsets.from(message));
+		setText(message, "\n", type);
+		return message;
+	}
+
+	@Override
+	public void close() throws IOException {
+		fCloser.close();
+	}
+
+	private static void setText(MimePart part, String value, ContentType type) throws MessagingException {
+		part.setText(value, type.getParameter("charset"), type.getSubType());
+		part.setHeader("Content-Type", type.toString());
+		part.setHeader("Content-Transfer-Encoding", "base64");
+	}
+
+	private static Session newSession() throws MessagingException {
+		try {
+			return SessionBuilder.create().build();
+		} catch (Throwable ex) {
 			throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
 		}
 	}
@@ -105,23 +144,19 @@ public class Message {
 		return (value == null || value.trim().isEmpty());
 	}
 
-	private boolean containsEncoded(String value) {
-		if (value == null) {
-			return false;
-		}
-
-		int p = value.indexOf("=?");
-		return (p != -1 && value.indexOf("?=", p + 2) != -1);
-	}
-
 	private String decodeText(String value) throws MessagingException {
 		if (value == null) {
 			return null;
 		}
 
-		if (containsEncoded(value)) {
+		for (;;) {
+			int i = value.indexOf("=?");
+			if (i == -1 || value.indexOf("?=", i + 2) == -1) {
+				break;
+			}
+
 			try {
-				value = MimeUtility.decodeText(value);
+				value = value.substring(0, i) + MimeUtility.decodeText(value.substring(i));
 			} catch (UnsupportedEncodingException ex) {
 				throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
 			}
@@ -130,8 +165,21 @@ public class Message {
 		return value;
 	}
 
-	private void prepare(Part part) throws MessagingException {
+	private String getContentTransferEncoding(Part part) throws MessagingException {
+		String[] encoding = part.getHeader("Content-Transfer-Encoding");
+		if (encoding != null) {
+			return encoding[0];
+		}
+		return null;
+	}
+
+	private void prepare(Part part) throws MessagingException, IOException {
 		String contentType = defaultString(part.getContentType());
+
+		if (part instanceof MimeMessage) {
+			fParts.clear();
+			fContents.clear();
+		}
 
 		if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())) {
 			fParts.add(part);
@@ -139,6 +187,18 @@ public class Message {
 		}
 
 		if ((part.isMimeType("text/*") || contentType.startsWith("text/"))) {
+			ContentType type = new ContentType(contentType);
+			if (contentType.toLowerCase().indexOf("charset") == -1) {
+				type.setParameter("charset", Charsets.from(part));
+				part.setHeader("Content-Type", type.toString());
+			}
+			if ("8bit".equals(getContentTransferEncoding(part))) {
+				String text = decodeText((String) part.getContent());
+				fContents.put(type.getBaseType(), text);
+			} else {
+				fContents.put(type.getBaseType(), (String) part.getContent());
+			}
+
 			fParts.add(part);
 			return;
 		}
@@ -166,205 +226,302 @@ public class Message {
 		}
 	}
 
-	private Address[] fixPersonal(Address[] addresses) throws MessagingException {
-		String charset = Charsets.from(fMessage);
-		for (Address a : addresses) {
-			if (a instanceof InternetAddress) {
-				InternetAddress ia = (InternetAddress) a;
-				try {
-					String personal = ia.getPersonal();
-					if (personal != null) {
-						if (containsEncoded(personal)) {
-							personal = decodeText(personal);
-						}
-						ia.setPersonal(new String(personal.getBytes(charset), charset), charset);
-					}
-				} catch (UnsupportedEncodingException ex) {
-					throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
+	private MimeHeaders getMimeHeaders() throws MessagingException {
+		if (fMimeHeaders == null) {
+			fMimeHeaders = new MimeHeaders();
+		}
+		return fMimeHeaders;
+	}
+
+	private InternetAddress[] fixPersonal(InternetAddress[] addresses) throws MessagingException {
+		String charset = getCharset();
+		for (InternetAddress ia : addresses) {
+			try {
+				String personal = ia.getPersonal();
+				if (personal != null) {
+					personal = decodeText(personal);
+					ia.setPersonal(new String(personal.getBytes(charset), charset), charset);
 				}
+			} catch (UnsupportedEncodingException ex) {
+				throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
 			}
 		}
 		return addresses;
 	}
 
-	private byte[] toByteArray(Part part) throws MessagingException, IOException {
-		ByteArrayOutputStream bo = new ByteArrayOutputStream();
-		try (InputStream in = new BufferedInputStream(part.getInputStream())) {
-			try (OutputStream out = new BufferedOutputStream(bo)) {
-				byte[] buf = new byte[8192];
-				for (;;) {
-					int size = in.read(buf);
-					if (size == -1) {
-						break;
-					}
-					out.write(buf, 0, size);
+	private void replaceContent(List<Part> contentParts, List<Part> attachmentParts) throws MessagingException, IOException {
+		Objects.requireNonNull(contentParts);
+		Objects.requireNonNull(attachmentParts);
+
+		String encoding = null;
+		try {
+			encoding = getMimeHeaders().getDecoded("Content-Transfer-Encoding")[0];
+		} catch (Throwable ignore) {}
+		String messageCharset = getCharset();
+
+		if (contentParts.size() > 1 || !attachmentParts.isEmpty()) {
+			Multipart mp = new MimeMultipart();
+			for (Part p : contentParts) {
+				if (p instanceof MimeMessage) {
+					MimeBodyPart part = new MimeBodyPart();
+					ContentType type = new ContentType(p.getContentType());
+					type.setParameter("charset", messageCharset);
+					p.setHeader("Content-Type", type.toString());
+					setText(part, (String) p.getContent(), type);
+					mp.addBodyPart(part);
+					continue;
 				}
-				out.flush();
+
+				mp.addBodyPart(BodyPart.class.cast(p));
 			}
+			for (Part p : attachmentParts) {
+				mp.addBodyPart(BodyPart.class.cast(p));
+			}
+			fMessage.setContent(mp);
+			fMessage.setHeader("Content-Type", mp.getContentType());
+			getMimeHeaders().setValue("Content-Type", mp.getContentType());
+		} else if (!contentParts.isEmpty()) {
+			Part p = contentParts.get(0);
+			ContentType type = new ContentType(p.getContentType());
+			type.setParameter("charset", messageCharset);
+			p.setHeader("Content-Type", type.toString());
+			setText(fMessage, (String) p.getContent(), type);
+			getMimeHeaders().setValue("Content-Type", type.toString());
 		}
-		return bo.toByteArray();
+
+		if (encoding != null) {
+			fMessage.setHeader("Content-Transfer-Encoding", encoding);
+		}
+
+		prepare(fMessage);
 	}
 
-	public String[] getHeader(String name) throws MessagingException {
-		String[] values = fMessage.getHeader(name);
-		for (int i = 0; i < values.length; i++) {
+	private java.util.Date[] listDates() throws MessagingException {
+		String[] values = getMimeHeaders().getDecoded("Received");
+		List<java.util.Date> l = new ArrayList<>();
+		if (values != null) {
+			for (String value : values) {
+				int i = value.lastIndexOf(";");
+				if (i == -1) {
+					continue;
+				}
+				value = value.substring(i + 1).trim();
+				try {
+					l.add(new MailDateFormat().parse(value));
+				} catch (ParseException ex) {
+					throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
+				}
+			}
+			Collections.sort(l);
+		} else {
 			try {
-				values[i] = MimeUtility.decodeText(values[i]);
-			} catch (UnsupportedEncodingException ex) {
+				l.add(new MailDateFormat().parse(getMimeHeaders().getDecoded("Date")[0]));
+			} catch (ParseException ex) {
 				throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
 			}
 		}
-		return values;
+		return l.toArray(new java.util.Date[l.size()]);
+	}
+
+	private InternetAddress[] toInternetAddress(Address...address) throws MessagingException {
+		List<InternetAddress> l = new ArrayList<>();
+		for (Address e : address) {
+			l.add(InternetAddress.class.cast(e));
+		}
+		return l.toArray(new InternetAddress[l.size()]);
+	}
+
+	public String[] getHeader(String name) throws MessagingException {
+		return getMimeHeaders().getDecoded(name);
+	}
+
+	public Message setHeader(String name, String value) throws MessagingException {
+		fMessage.setHeader(name, value);
+		getMimeHeaders().setValue(name, value);
+		return this;
+	}
+
+	public Message setHeader(String name, String[] values) throws MessagingException {
+		for (int i = 0; i < values.length; i++) {
+			if (i == 0) {
+				fMessage.setHeader(name, values[i]);
+			} else {
+				fMessage.addHeader(name, values[i]);
+			}
+		}
+		getMimeHeaders().setValue(name, values);
+		return this;
+	}
+
+	public Message removeHeader(String...names) throws MessagingException {
+		for (String name : names) {
+			fMessage.removeHeader(name);
+			getMimeHeaders().removeValue(name);
+		}
+		return this;
 	}
 
 	public int getMessageNumber() {
+		if (fMessageNumber != null) {
+			return fMessageNumber;
+		}
 		return fMessage.getMessageNumber();
 	}
 
-	public String getMessageId() throws MessagingException {
-		return fMessage.getHeader("Message-Id", "");
+	public Message setMessageNumber(int messageNumber) {
+		fMessageNumber = messageNumber;
+		return this;
+	}
+
+	public String getMessageID() throws MessagingException {
+		return getMimeHeaders().getDecoded("Message-ID")[0];
+	}
+
+	public Message setMessageID(String messageID) throws MessagingException {
+		getMimeHeaders().setValue("Message-ID", messageID);
+		return this;
 	}
 
 	public String getContentType() throws MessagingException {
-		return fMessage.getContentType();
+		return getMimeHeaders().getDecoded("Content-Type")[0];
 	}
 
 	public java.util.Date getSentDate() throws MessagingException {
-		return fMessage.getSentDate();
+		java.util.Date[] l = listDates();
+		if (l.length == 0) {
+			return null;
+		}
+		return l[0];
 	}
 
-	public Message setSentDate(java.util.Date sent) throws MessagingException {
-		fMessage.setSentDate(sent);
+	public Message setSentDate(java.util.Date value) throws MessagingException {
+		fMessage.setSentDate(value);
+		getMimeHeaders().setValue("Date", new MailDateFormat().format(value));
 		return this;
 	}
 
 	public java.util.Date getReceivedDate() throws MessagingException {
-		{
-			java.util.Date value = fMessage.getReceivedDate();
-			if (value != null) {
-				return value;
-			}
+		java.util.Date[] l = listDates();
+		if (l.length == 0) {
+			return null;
 		}
-
-		{
-			String[] values = fMessage.getHeader("received");
-			if (values != null) {
-				String value = values[0];
-				int p = value.lastIndexOf(";");
-				if (p != -1) {
-					value = value.substring(p).trim();
-				}
-				try {
-					java.util.Date receivedDate = new MailDateFormat().parse(value);
-					if (receivedDate != null) {
-						return receivedDate;
-					}
-				} catch (ParseException ignore) {}
-			}
-		}
-
-		{
-			String[] values = fMessage.getHeader("date");
-			if (values != null) {
-				String value = values[0];
-				try {
-					java.util.Date dateDate = new MailDateFormat().parse(value);
-					if (dateDate != null) {
-						return dateDate;
-					}
-				} catch (ParseException ignore) {}
-			}
-		}
-
-		return null;
+		return l[l.length - 1];
 	}
 
 	public Address[] getFrom() throws MessagingException {
-		Address[] a = fMessage.getFrom();
-		return (a != null) ? fixPersonal(a) : new Address[0];
+		String[] values = getMimeHeaders().getDecoded("From");
+		if (values == null) {
+			return new InternetAddress[0];
+		}
+		InternetAddress[] a = InternetAddress.parse(values[0]);
+		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
 	public Message setFrom(Address address) throws MessagingException {
 		fMessage.setFrom(address);
+		getMimeHeaders().setValue("From", InternetAddress.toUnicodeString(toInternetAddress(address)));
 		return this;
 	}
 
 	public Address[] getTo() throws MessagingException {
-		Address[] a = fMessage.getRecipients(RecipientType.TO);
-		return (a != null) ? fixPersonal(a) : new Address[0];
+		String[] values = getMimeHeaders().getDecoded("To");
+		if (values == null) {
+			return new InternetAddress[0];
+		}
+		InternetAddress[] a = InternetAddress.parse(values[0]);
+		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setTo(Address[] addresses) throws MessagingException {
+	public Message setTo(Address...addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.TO, addresses);
+		getMimeHeaders().setValue("To", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
 		return this;
 	}
 
 	public Address[] getCc() throws MessagingException {
-		Address[] a = fMessage.getRecipients(RecipientType.CC);
-		return (a != null) ? fixPersonal(a) : new Address[0];
+		String[] values = getMimeHeaders().getDecoded("Cc");
+		if (values == null) {
+			return new InternetAddress[0];
+		}
+		InternetAddress[] a = InternetAddress.parse(values[0]);
+		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setCc(Address[] addresses) throws MessagingException {
+	public Message setCc(Address...addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.CC, addresses);
+		getMimeHeaders().setValue("Cc", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
 		return this;
 	}
 
 	public Address[] getBcc() throws MessagingException {
-		Address[] a = fMessage.getRecipients(RecipientType.BCC);
-		return (a != null) ? fixPersonal(a) : new Address[0];
+		String[] values = getMimeHeaders().getDecoded("Bcc");
+		if (values == null) {
+			return new InternetAddress[0];
+		}
+		InternetAddress[] a = InternetAddress.parse(values[0]);
+		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setBcc(Address[] addresses) throws MessagingException {
+	public Message setBcc(Address...addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.BCC, addresses);
+		getMimeHeaders().setValue("Bcc", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
 		return this;
 	}
 
 	public Address[] getReplyTo() throws MessagingException {
-		Address[] a = fMessage.getReplyTo();
-		return (a != null) ? fixPersonal(a) : new Address[0];
+		String[] values = getMimeHeaders().getDecoded("Reply-To");
+		if (values == null) {
+			return new InternetAddress[0];
+		}
+		InternetAddress[] a = InternetAddress.parse(values[0]);
+		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setReplyTo(Address[] addresses) throws MessagingException {
+	public Message setReplyTo(Address...addresses) throws MessagingException {
 		fMessage.setReplyTo(addresses);
+		getMimeHeaders().setValue("Reply-To", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
 		return this;
 	}
 
 	public String getSubject() throws MessagingException {
-		return decodeText(fMessage.getSubject());
+		return getMimeHeaders().getDecoded("Subject")[0];
 	}
 
-	public Message setSubject(String subject) throws MessagingException {
-		fMessage.setSubject(subject, Charsets.UTF8);
+	public Message setSubject(String value) throws MessagingException {
+		fMessage.setSubject(value, getCharset());
+		getMimeHeaders().setValue("Subject", value);
 		return this;
 	}
 
 	public String[] getInReplyTo() throws MessagingException {
-		return fMessage.getHeader("In-Reply-To");
+		return getMimeHeaders().getDecoded("In-Reply-To");
 	}
 
-	public Message setInReplyTo(String[] inReplyTo) throws MessagingException {
+	public Message setInReplyTo(String[] values) throws MessagingException {
 		fMessage.removeHeader("In-Reply-To");
-		for (String v : inReplyTo) {
-			fMessage.addHeader("In-Reply-To", v);
+		for (String value : values) {
+			fMessage.addHeader("In-Reply-To", value);
 		}
+		getMimeHeaders().setValue("In-Reply-To", String.join(" ", values));
 		return this;
 	}
 
 	public String[] getReferences() throws MessagingException {
-		return fMessage.getHeader("References");
+		return getMimeHeaders().getDecoded("References");
 	}
 
-	public Message setReferences(String[] references) throws MessagingException {
+	public Message setReferences(String[] values) throws MessagingException {
 		fMessage.removeHeader("References");
-		for (String v : references) {
-			fMessage.addHeader("References", v);
+		for (String value : values) {
+			fMessage.addHeader("References", value);
 		}
+		getMimeHeaders().setValue("References", String.join(" ", values));
 		return this;
 	}
 
 	public String[] getIdentifiers() throws MessagingException {
 		List<String> l = new ArrayList<>();
-		for (String[] sa : new String[][] { new String[] { getMessageId() }, getInReplyTo(), getReferences() }) {
+		for (String[] sa : new String[][] { new String[] { getMessageID() }, getInReplyTo(), getReferences() }) {
 			if (sa != null) {
 				for (String id : sa) {
 					if (!isEmpty(id) && !l.contains(id)) {
@@ -401,14 +558,21 @@ public class Message {
 		}
 	}
 
-	public Message setPriority(String priority) throws MessagingException, IOException {
+	public Message setPriority(String priority) throws MessagingException {
 		fMessage.setHeader("Priority", priority);
 		return this;
 	}
 
 	public String getContent(String mimeType) throws MessagingException, IOException {
+		return fContents.get(mimeType);
+	}
+
+	public Message setContent(String value, String mimeType) throws MessagingException, IOException {
+		List<Part> contentParts = new ArrayList<>();
+		List<Part> attachmentParts = new ArrayList<>();
 		for (Part p : fParts) {
 			if (Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition())) {
+				attachmentParts.add(p);
 				continue;
 			}
 
@@ -420,13 +584,79 @@ public class Message {
 			}
 
 			if (type.match(mimeType)) {
-				return new String(toByteArray(p), Charsets.from(p));
+				continue;
 			}
+
+			contentParts.add(p);
 		}
-		return null;
+
+		if (value != null && !value.isEmpty()) {
+			MimeBodyPart p = new MimeBodyPart();
+			ContentType type = new ContentType(mimeType);
+			type.setParameter("charset", getCharset());
+			setText(p, value, type);
+			contentParts.add(p);
+			contentParts.sort(new ContentPartComparator());
+		}
+
+		replaceContent(contentParts, attachmentParts);
+
+		return this;
 	}
 
-	public Attachment[] getAttachments() throws MessagingException, IOException {
+	public Message addAttachment(InputStream stream, String filename, String mimeType) throws MessagingException, IOException {
+		try (stream) {
+			List<Part> contentParts = new ArrayList<>();
+			List<Part> attachmentParts = new ArrayList<>();
+			for (Part p : fParts) {
+				if (Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition())) {
+					if (!filename.equalsIgnoreCase(new AttachmentImpl(p).getFilename())) {
+						attachmentParts.add(p);
+					}
+					continue;
+				}
+
+				contentParts.add(p);
+			}
+
+			InputStreamDataSource ds = new InputStreamDataSource(stream, filename, mimeType);
+			fCloser.add(ds);
+
+			MimeBodyPart p = new MimeBodyPart();
+			p.setDataHandler(new DataHandler(ds));
+			p.setDisposition(Part.ATTACHMENT);
+			p.setFileName(MimeUtility.encodeWord(filename, getCharset(), "B"));
+			p.setHeader("Content-Type", mimeType);
+			p.setHeader("Content-Transfer-Encoding", "base64");
+			attachmentParts.add(p);
+			attachmentParts.sort(new AttachmentPartComparator());
+
+			replaceContent(contentParts, attachmentParts);
+
+			return this;
+		}
+	}
+
+	public Message removeAttachment(String filename) throws MessagingException, IOException {
+		List<Part> contentParts = new ArrayList<>();
+		List<Part> attachmentParts = new ArrayList<>();
+		for (Part p : fParts) {
+			if (Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition())) {
+				if (!filename.equalsIgnoreCase(new AttachmentImpl(p).getFilename())) {
+					attachmentParts.add(p);
+				}
+				continue;
+			}
+
+			contentParts.add(p);
+		}
+
+		replaceContent(contentParts, attachmentParts);
+
+		return this;
+	}
+
+	public Attachment[] getAttachments() throws MessagingException {
 		List<Attachment> l = new ArrayList<>();
 		for (Part p : fParts) {
 			if (!Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition())) {
@@ -438,34 +668,17 @@ public class Message {
 		return l.toArray(new Attachment[l.size()]);
 	}
 
-	public boolean hasContent(String mimeType) throws MessagingException, IOException {
+	public boolean hasContent(String mimeType) throws MessagingException {
+		return fContents.containsKey(mimeType);
+	}
+
+	public boolean hasAttachments() throws MessagingException {
 		for (Part p : fParts) {
 			if (Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition())) {
-				continue;
-			}
-
-			ContentType type;
-			try {
-				type = new ContentType(p.getContentType());
-			} catch (Throwable ignore) {
-				continue;
-			}
-
-			if (type.match(mimeType)) {
 				return true;
 			}
 		}
 		return false;
-	}
-
-	public boolean hasAttachments() throws MessagingException, IOException {
-		int n = 0;
-		for (Part p : fParts) {
-			if (Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition())) {
-				n++;
-			}
-		}
-		return (n > 0);
 	}
 
 	public boolean isAnswered() throws MessagingException {
@@ -531,18 +744,42 @@ public class Message {
 		return this;
 	}
 
-	public void saveChanges() throws MessagingException {
-		fMessage.saveChanges();
-	}
-
 	public MimeMessage toMimeMessage() {
 		return fMessage;
 	}
 
+	public void writeTo(OutputStream out) throws MessagingException, IOException {
+		getMimeHeaders().writeTo(out);
+		out.write("\r\n".toString().getBytes(getCharset()));
+		if (fMessage.getContent() instanceof Multipart) {
+			Multipart mp = (Multipart) fMessage.getContent();
+			mp.writeTo(out);
+		} else {
+			Object value = fMessage.getContent();
+			if (value != null) {
+				if (!(value instanceof String)) {
+					throw new MessagingException("The content value of the specified type cannot be encoded: " + value.getClass().getName());
+				}
+				String encoding = null;
+				try {
+					encoding = getMimeHeaders().getDecoded("Content-Transfer-Encoding")[0];
+				} catch (Throwable ignore) {}
+				if (encoding != null && encoding.equalsIgnoreCase("base64")) {
+					value = new String(Base64.getEncoder().encode(value.toString().getBytes(getCharset())), "ISO-8859-1");
+				}
+				out.write(value.toString().getBytes(getCharset()));
+			}
+		}
+		out.flush();
+	}
+
+	@SuppressWarnings("resource")
 	public InputStream toInputStream() throws MessagingException, IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		fMessage.writeTo(out);
-		return new ByteArrayInputStream(out.toByteArray());
+		return new MimeCache().getInputStream();
+	}
+
+	public String getCharset() throws MessagingException {
+		return Charsets.from(fMessage);
 	}
 
 	public interface Attachment {
@@ -553,6 +790,8 @@ public class Message {
 		String getCharset() throws MessagingException;
 
 		String getFilename() throws MessagingException;
+
+		InputStream getInputStream() throws MessagingException, IOException;
 
 		void writeTo(OutputStream out) throws MessagingException, IOException;
 	}
@@ -584,16 +823,17 @@ public class Message {
 
 		@Override
 		public String getFilename() throws MessagingException {
-			String filename = fPart.getFileName();
-			if (containsEncoded(filename)) {
-				filename = decodeText(filename);
-			}
-			return filename;
+			return decodeText(fPart.getFileName());
+		}
+
+		@Override
+		public InputStream getInputStream() throws MessagingException, IOException {
+			return new BufferedInputStream(fPart.getInputStream());
 		}
 
 		@Override
 		public void writeTo(OutputStream out) throws MessagingException, IOException {
-			try (InputStream in = new BufferedInputStream(fPart.getInputStream())) {
+			try (InputStream in = getInputStream()) {
 				byte[] buf = new byte[8192];
 				for (;;) {
 					int size = in.read(buf);
@@ -604,6 +844,231 @@ public class Message {
 				}
 				out.flush();
 			}
+		}
+	}
+
+	private class ContentPartComparator implements Comparator<Part> {
+		@Override
+		public int compare(Part p1, Part p2) {
+			int c1 = getCategory(p1);
+			int c2 = getCategory(p2);
+			if (c1 < c2) {
+				return -1;
+			}
+			if (c1 > c2) {
+				return 1;
+			}
+			return 0;
+		}
+
+		private int getCategory(Part p) {
+			ContentType type;
+			try {
+				type = new ContentType(p.getContentType());
+			} catch (Throwable ignore) {
+				return 9;
+			}
+
+			if ("html".equals(type.getSubType())) {
+				return 0;
+			}
+
+			if ("plain".equals(type.getSubType())) {
+				return 1;
+			}
+
+			return 9;
+		}
+	}
+
+	private class AttachmentPartComparator implements Comparator<Part> {
+		@Override
+		public int compare(Part p1, Part p2) {
+			Attachment a1 = new AttachmentImpl(p1);
+			Attachment a2 = new AttachmentImpl(p2);
+			try {
+				return a1.getFilename().compareToIgnoreCase(a2.getFilename());
+			} catch (Throwable ignore) {}
+			return 0;
+		}
+	}
+
+	private class MimeHeaders {
+		private final Map<String, List<String>> fHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+		public MimeHeaders() throws MessagingException {
+			Path path = null;
+			try {
+				path = Files.createTempFile("mime-", null);
+				path.toFile().deleteOnExit();
+
+				try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(path))) {
+					fMessage.writeTo(out);
+				}
+
+				try (BufferedReader in = newBufferedReader(path)) {
+					String line = in.readLine();
+					for (;;) {
+						if (line == null || line.trim().isEmpty()) {
+							break;
+						}
+
+						int i = line.indexOf(":");
+						String name = line.substring(0, i);
+						String value = line.substring(i + 1);
+						if (!value.isEmpty() && (value.charAt(0) == ' ' || value.charAt(0) == '\t')) {
+							value = value.substring(1);
+						}
+						StringBuilder buf = new StringBuilder();
+						buf.append(value);
+						for (;;) {
+							line = in.readLine();
+							if (line == null || line.trim().isEmpty()) {
+								break;
+							}
+							if (!(line.charAt(0) == ' ' || line.charAt(0) == '\t')) {
+								break;
+							}
+							buf.append(line.substring(1));
+						}
+						addEncoded(name, buf.toString());
+					}
+				}
+			} catch (IOException ex) {
+				throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
+			} finally {
+				try {
+					Files.deleteIfExists(path);
+				} catch (Throwable ignore) {}
+			}
+		}
+
+		private BufferedReader newBufferedReader(Path path) throws MessagingException, IOException {
+			InputStream in = null;
+			try {
+				in = new BufferedInputStream(Files.newInputStream(path));
+				in.mark(3);
+				if (in.available() >= 3) {
+					byte[] buffer = new byte[3];
+					in.read(buffer);
+					if (!(buffer[0] == (byte) 0xEF && buffer[1] == (byte) 0xBB && buffer[2] == (byte) 0xBF)) {
+						in.reset();
+					}
+				}
+			} catch (Throwable ex) {
+				try {
+					in.close();
+				} catch (Throwable ignore) {}
+				if (ex instanceof IOException) {
+					throw (IOException) ex;
+				}
+				throw (IOException) new IOException(ex.getMessage()).initCause(ex);
+			}
+			return new BufferedReader(new InputStreamReader(in, Charset.forName(getCharset())));
+		}
+
+		public String[] getDecoded(String name) throws MessagingException {
+			List<String> values = fHeaders.get(name);
+			if (values == null) {
+				return null;
+			}
+
+			List<String> l = new ArrayList<>();
+			for (String e : values) {
+				l.add(decodeText(e).trim());
+			}
+			return l.toArray(new String[l.size()]);
+		}
+
+		public void setEncoded(String name, String value) throws MessagingException {
+			List<String> values = new ArrayList<>();
+			values.add(value);
+			fHeaders.put(name, values);
+		}
+
+		public void addEncoded(String name, String value) throws MessagingException {
+			List<String> values = fHeaders.get(name);
+			if (values == null) {
+				values = new ArrayList<>();
+			}
+			values.add(value);
+			fHeaders.put(name, values);
+		}
+
+		public void setValue(String name, String value) throws MessagingException {
+			if (value == null) {
+				removeValue(name);
+				return;
+			}
+
+			setValue(name, new String[] { value });
+		}
+
+		public void setValue(String name, String[] values) throws MessagingException {
+			if (values == null) {
+				removeValue(name);
+				return;
+			}
+
+			for (int i = 0; i < values.length; i++) {
+				try {
+					if (i == 0) {
+						setEncoded(name, MimeUtility.encodeWord(values[i], getCharset(), "B"));
+					} else {
+						addEncoded(name, MimeUtility.encodeWord(values[i], getCharset(), "B"));
+					}
+				} catch (UnsupportedEncodingException ex) {
+					throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
+				}
+			}
+		}
+
+		public void removeValue(String name) throws MessagingException {
+			fHeaders.remove(name);
+		}
+
+		public void writeTo(OutputStream out) throws MessagingException, IOException {
+			for (Map.Entry<String, List<String>> e : fHeaders.entrySet()) {
+				for (String value : e.getValue()) {
+					String line = e.getKey() + ": " + MimeUtility.encodeText(decodeText(value)) + "\r\n";
+					out.write(line.getBytes(getCharset()));
+				}
+			}
+			out.flush();
+		}
+	}
+
+	private class MimeCache implements Closeable {
+		private final Path fPath;
+
+		private MimeCache() throws MessagingException {
+			try {
+				fPath = Files.createTempFile("mime-", null);
+				fPath.toFile().deleteOnExit();
+
+				try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(fPath))) {
+					writeTo(out);
+				}
+			} catch (IOException ex) {
+				throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
+			}
+		}
+
+		public InputStream getInputStream() throws IOException {
+			return new BufferedInputStream(Files.newInputStream(fPath)) {
+				@Override
+				public void close() throws IOException {
+					super.close();
+					MimeCache.this.close();
+				}
+			};
+		}
+
+		@Override
+		public void close() throws IOException {
+			try {
+				Files.deleteIfExists(fPath);
+			} catch (Throwable ignore) {}
 		}
 	}
 

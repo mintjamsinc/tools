@@ -22,21 +22,26 @@
 
 package jp.mintjams.tools.internal.mail;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import javax.activation.DataSource;
 
-public class InputStreamDataSource implements DataSource {
+public class InputStreamDataSource implements DataSource, Closeable {
 
+	private final Cache fCache;
 	private final String fFilename;
-	private final InputStream fInputStream;
 	private final String fContentType;
 
-	public InputStreamDataSource(String filename, InputStream inputStream, String contentType) {
+	public InputStreamDataSource(InputStream stream, String filename, String contentType) throws IOException {
+		this.fCache = new Cache(stream);
 		this.fFilename = filename;
-		this.fInputStream = inputStream;
 		this.fContentType = contentType;
 	}
 
@@ -47,7 +52,7 @@ public class InputStreamDataSource implements DataSource {
 
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return fInputStream;
+		return fCache.getInputStream();
 	}
 
 	@Override
@@ -58,6 +63,46 @@ public class InputStreamDataSource implements DataSource {
 	@Override
 	public OutputStream getOutputStream() throws IOException {
 		return null;
+	}
+
+	@Override
+	public void close() throws IOException {
+		try {
+			fCache.close();
+		} catch (Throwable ignore) {}
+	}
+
+	private class Cache implements Closeable {
+		private final Path fPath;
+
+		private Cache(InputStream in) throws IOException {
+			fPath = Files.createTempFile("data-", null);
+			fPath.toFile().deleteOnExit();
+
+			try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(fPath))) {
+				try (in) {
+					byte[] buffer = new byte[8192];
+					for (;;) {
+						int length = in.read(buffer);
+						if (length == -1) {
+							break;
+						}
+						out.write(buffer, 0, length);
+					}
+				}
+			}
+		}
+
+		public InputStream getInputStream() throws IOException {
+			return new BufferedInputStream(Files.newInputStream(fPath));
+		}
+
+		@Override
+		public void close() throws IOException {
+			try {
+				Files.deleteIfExists(fPath);
+			} catch (Throwable ignore) {}
+		}
 	}
 
 }

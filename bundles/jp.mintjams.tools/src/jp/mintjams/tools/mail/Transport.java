@@ -69,7 +69,6 @@ public class Transport implements Closeable {
 	}
 
 	public void send(javax.mail.Message message) throws MessagingException {
-		message.saveChanges();
 		fTransport.sendMessage(message, message.getAllRecipients());
 	}
 

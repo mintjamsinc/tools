@@ -74,6 +74,8 @@ public class Query {
 		}
 		if (username != null) {
 			store.connect(username, fPassword);
+		} else {
+			store.connect();
 		}
 		return store;
 	}
@@ -143,7 +145,9 @@ public class Query {
 		}
 	}
 
-	public interface Result extends Iterable<Message>, Closeable {}
+	public interface Result extends Iterable<Message>, Closeable {
+		int getSize();
+	}
 
 	private class ResultImpl implements Result {
 		private final Closer fCloser = Closer.newCloser();
@@ -163,7 +167,7 @@ public class Query {
 			public Message next() {
 				try {
 					return Message.from(fNextMessage);
-				} catch (MessagingException ex) {
+				} catch (MessagingException | IOException ex) {
 					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 				} finally {
 					fNextMessage = getNextMessage();
@@ -203,6 +207,16 @@ public class Query {
 				}
 			}
 			return null;
+		}
+
+		@Override
+		public int getSize() {
+			if (fMessages == null) {
+				try {
+					return fFolder.getMessageCount();
+				} catch (Throwable ignore) {}
+			}
+			return fMessages.length;
 		}
 
 		@Override
