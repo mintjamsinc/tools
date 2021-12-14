@@ -306,19 +306,18 @@ public class Message implements Closeable {
 					continue;
 				}
 				value = value.substring(i + 1).trim();
+				if (value.trim().isEmpty()) {
+					continue;
+				}
 				try {
 					l.add(new MailDateFormat().parse(value));
-				} catch (ParseException ex) {
-					throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
-				}
+				} catch (ParseException ignore) {}
 			}
 			Collections.sort(l);
 		} else {
 			try {
 				l.add(new MailDateFormat().parse(getMimeHeaders().getDecoded("Date")[0]));
-			} catch (ParseException ex) {
-				throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
-			}
+			} catch (ParseException ignore) {}
 		}
 		return l.toArray(new java.util.Date[l.size()]);
 	}
