@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -173,6 +175,28 @@ public class Message implements Closeable {
 		return null;
 	}
 
+	private String getContentAsString(Part part) throws MessagingException, IOException {
+		Object v = part.getContent();
+		if (v instanceof String) {
+			return (String) v;
+		}
+		if (v instanceof InputStream) {
+			try (Reader in = new InputStreamReader((InputStream) v, Charsets.from(part))) {
+				StringWriter out = new StringWriter();
+				char[] buffer = new char[8192];
+				for (;;) {
+					int length = in.read(buffer);
+					if (length == -1) {
+						break;
+					}
+					out.write(buffer, 0, length);
+				}
+				return out.toString();
+			}
+		}
+		return "";
+	}
+
 	private void prepare(Part part) throws MessagingException, IOException {
 		String contentType = defaultString(part.getContentType());
 
@@ -193,10 +217,9 @@ public class Message implements Closeable {
 				part.setHeader("Content-Type", type.toString());
 			}
 			if ("8bit".equals(getContentTransferEncoding(part))) {
-				String text = decodeText((String) part.getContent());
-				fContents.put(type.getBaseType(), text);
+				fContents.put(type.getBaseType(), decodeText(getContentAsString(part)));
 			} else {
-				fContents.put(type.getBaseType(), (String) part.getContent());
+				fContents.put(type.getBaseType(), getContentAsString(part));
 			}
 
 			fParts.add(part);
