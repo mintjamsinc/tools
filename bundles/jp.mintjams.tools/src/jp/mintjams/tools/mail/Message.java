@@ -256,7 +256,7 @@ public class Message implements Closeable {
 		return fMimeHeaders;
 	}
 
-	private InternetAddress[] fixPersonal(InternetAddress[] addresses) throws MessagingException {
+	private InternetAddress[] fixPersonal(InternetAddress...addresses) throws MessagingException {
 		String charset = getCharset();
 		for (InternetAddress ia : addresses) {
 			try {
@@ -353,6 +353,29 @@ public class Message implements Closeable {
 		return l.toArray(new InternetAddress[l.size()]);
 	}
 
+	private String getEncoded(Address...address) throws MessagingException {
+		InternetAddress[] addresses = toInternetAddress(address);
+		StringBuilder buf = new StringBuilder();
+		for (InternetAddress e : addresses) {
+			if (buf.length() > 0) {
+				buf.append(", ");
+			}
+
+			String personal = e.getPersonal();
+			if (personal != null && !personal.trim().isEmpty()) {
+				try {
+					buf.append(MimeUtility.encodeText(personal, getCharset(), "B"));
+				} catch (UnsupportedEncodingException ex) {
+					throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
+				}
+				buf.append(" <").append(e.getAddress()).append(">");
+			} else {
+				buf.append(e.getAddress());
+			}
+		}
+		return buf.toString();
+	}
+
 	public String[] getHeader(String name) throws MessagingException {
 		return getMimeHeaders().getDecoded(name);
 	}
@@ -441,7 +464,7 @@ public class Message implements Closeable {
 
 	public Message setFrom(Address address) throws MessagingException {
 		fMessage.setFrom(address);
-		getMimeHeaders().setValue("From", InternetAddress.toUnicodeString(toInternetAddress(address)));
+		getMimeHeaders().setEncoded("From", getEncoded(toInternetAddress(address)));
 		return this;
 	}
 
@@ -456,7 +479,7 @@ public class Message implements Closeable {
 
 	public Message setTo(Address...addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.TO, addresses);
-		getMimeHeaders().setValue("To", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
+		getMimeHeaders().setEncoded("To", getEncoded(toInternetAddress(addresses)));
 		return this;
 	}
 
@@ -471,7 +494,7 @@ public class Message implements Closeable {
 
 	public Message setCc(Address...addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.CC, addresses);
-		getMimeHeaders().setValue("Cc", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
+		getMimeHeaders().setEncoded("Cc", getEncoded(toInternetAddress(addresses)));
 		return this;
 	}
 
@@ -486,7 +509,7 @@ public class Message implements Closeable {
 
 	public Message setBcc(Address...addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.BCC, addresses);
-		getMimeHeaders().setValue("Bcc", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
+		getMimeHeaders().setEncoded("Bcc", getEncoded(toInternetAddress(addresses)));
 		return this;
 	}
 
@@ -501,7 +524,7 @@ public class Message implements Closeable {
 
 	public Message setReplyTo(Address...addresses) throws MessagingException {
 		fMessage.setReplyTo(addresses);
-		getMimeHeaders().setValue("Reply-To", InternetAddress.toUnicodeString(toInternetAddress(addresses)));
+		getMimeHeaders().setEncoded("Reply-To", getEncoded(toInternetAddress(addresses)));
 		return this;
 	}
 
@@ -1052,8 +1075,18 @@ public class Message implements Closeable {
 		public void writeTo(OutputStream out) throws MessagingException, IOException {
 			for (Map.Entry<String, List<String>> e : fHeaders.entrySet()) {
 				for (String value : e.getValue()) {
-					String line = e.getKey() + ": " + MimeUtility.encodeText(decodeText(value)) + "\r\n";
-					out.write(line.getBytes(getCharset()));
+					StringBuilder line = new StringBuilder().append(e.getKey()).append(": ");
+					if (e.getKey().equalsIgnoreCase("From")
+							|| e.getKey().equalsIgnoreCase("To")
+							|| e.getKey().equalsIgnoreCase("Cc")
+							|| e.getKey().equalsIgnoreCase("Bcc")
+							|| e.getKey().equalsIgnoreCase("Reply-To")) {
+						line.append(getEncoded(fixPersonal(InternetAddress.parse(value))));
+					} else {
+						line.append(MimeUtility.encodeText(decodeText(value)));
+					}
+					line.append("\r\n");
+					out.write(line.toString().getBytes(getCharset()));
 				}
 			}
 			out.flush();
