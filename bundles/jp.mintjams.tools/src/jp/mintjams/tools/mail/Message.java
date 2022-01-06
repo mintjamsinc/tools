@@ -1081,7 +1081,7 @@ public class Message implements Closeable {
 							|| e.getKey().equalsIgnoreCase("Cc")
 							|| e.getKey().equalsIgnoreCase("Bcc")
 							|| e.getKey().equalsIgnoreCase("Reply-To")) {
-						line.append(getEncoded(fixPersonal(InternetAddress.parse(value))));
+						line.append(getEncoded(fixPersonal(InternetAddress.parse(decodeText(value)))));
 					} else {
 						line.append(MimeUtility.encodeText(decodeText(value)));
 					}
