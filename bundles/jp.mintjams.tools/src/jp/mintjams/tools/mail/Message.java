@@ -419,7 +419,11 @@ public class Message implements Closeable {
 	}
 
 	public String getMessageID() throws MessagingException {
-		return getMimeHeaders().getDecoded("Message-ID")[0];
+		String[] values = getMimeHeaders().getDecoded("Message-ID");
+		if (values == null) {
+			return null;
+		}
+		return values[0];
 	}
 
 	public Message setMessageID(String messageID) throws MessagingException {
