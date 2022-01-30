@@ -458,7 +458,7 @@ public class Message implements Closeable {
 	}
 
 	public Address[] getFrom() throws MessagingException {
-		String[] values = getMimeHeaders().getDecoded("From");
+		String[] values = getMimeHeaders().getValue("From");
 		if (values == null) {
 			return new InternetAddress[0];
 		}
@@ -473,7 +473,7 @@ public class Message implements Closeable {
 	}
 
 	public Address[] getTo() throws MessagingException {
-		String[] values = getMimeHeaders().getDecoded("To");
+		String[] values = getMimeHeaders().getValue("To");
 		if (values == null) {
 			return new InternetAddress[0];
 		}
@@ -488,7 +488,7 @@ public class Message implements Closeable {
 	}
 
 	public Address[] getCc() throws MessagingException {
-		String[] values = getMimeHeaders().getDecoded("Cc");
+		String[] values = getMimeHeaders().getValue("Cc");
 		if (values == null) {
 			return new InternetAddress[0];
 		}
@@ -503,7 +503,7 @@ public class Message implements Closeable {
 	}
 
 	public Address[] getBcc() throws MessagingException {
-		String[] values = getMimeHeaders().getDecoded("Bcc");
+		String[] values = getMimeHeaders().getValue("Bcc");
 		if (values == null) {
 			return new InternetAddress[0];
 		}
@@ -1016,6 +1016,14 @@ public class Message implements Closeable {
 			return new BufferedReader(new InputStreamReader(in, Charset.forName(getCharset())));
 		}
 
+		public String[] getValue(String name) throws MessagingException {
+			List<String> values = fHeaders.get(name);
+			if (values == null) {
+				return null;
+			}
+			return values.toArray(new String[values.size()]);
+		}
+
 		public String[] getDecoded(String name) throws MessagingException {
 			List<String> values = fHeaders.get(name);
 			if (values == null) {
@@ -1085,7 +1093,7 @@ public class Message implements Closeable {
 							|| e.getKey().equalsIgnoreCase("Cc")
 							|| e.getKey().equalsIgnoreCase("Bcc")
 							|| e.getKey().equalsIgnoreCase("Reply-To")) {
-						line.append(getEncoded(fixPersonal(InternetAddress.parse(decodeText(value)))));
+						line.append(getEncoded(fixPersonal(InternetAddress.parse(value))));
 					} else {
 						line.append(MimeUtility.encodeText(decodeText(value)));
 					}
