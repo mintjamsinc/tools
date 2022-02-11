@@ -361,17 +361,7 @@ public class Message implements Closeable {
 				buf.append(", ");
 			}
 
-			String personal = e.getPersonal();
-			if (personal != null && !personal.trim().isEmpty()) {
-				try {
-					buf.append(MimeUtility.encodeText(personal, getCharset(), "B"));
-				} catch (UnsupportedEncodingException ex) {
-					throw (MessagingException) new MessagingException(ex.getMessage()).initCause(ex);
-				}
-				buf.append(" <").append(e.getAddress()).append(">");
-			} else {
-				buf.append(e.getAddress());
-			}
+			buf.append(e.toUnicodeString());
 		}
 		return buf.toString();
 	}
