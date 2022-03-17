@@ -22,7 +22,6 @@
 
 package jp.mintjams.tools.internal.sql;
 
-import java.beans.Statement;
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Connection;
@@ -30,6 +29,7 @@ import java.sql.JDBCType;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
