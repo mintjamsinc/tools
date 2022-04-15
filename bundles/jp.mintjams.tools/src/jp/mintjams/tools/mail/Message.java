@@ -508,7 +508,7 @@ public class Message implements Closeable {
 	}
 
 	public Address[] getReplyTo() throws MessagingException {
-		String[] values = getMimeHeaders().getDecoded("Reply-To");
+		String[] values = getMimeHeaders().getValue("Reply-To");
 		if (values == null) {
 			return new InternetAddress[0];
 		}
