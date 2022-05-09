@@ -25,7 +25,8 @@ package jp.mintjams.tools.internal.lang;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class BooleanValueAdapter extends AbstractValueAdapter<Boolean> {
 
@@ -48,7 +49,7 @@ public class BooleanValueAdapter extends AbstractValueAdapter<Boolean> {
 			return booleanValue;
 		}
 
-		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 		if (stringValue != null) {
 			return Boolean.valueOf(stringValue);
 		}

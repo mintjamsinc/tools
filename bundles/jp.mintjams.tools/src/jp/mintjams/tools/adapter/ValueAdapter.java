@@ -27,6 +27,7 @@ public interface ValueAdapter<ValueType> {
 	static final String ENV_ENCODING = "encoding";
 	static final String ENV_ZONEID = "zoneId";
 	static final String ENV_DISPLAYZONEID = "displayZoneId";
+	static final String ENV_VALUEADAPTERS = "valueAdapters";
 
 	ValueType adapt(Object value);
 

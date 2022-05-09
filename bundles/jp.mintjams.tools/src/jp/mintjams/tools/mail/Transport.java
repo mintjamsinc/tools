@@ -36,7 +36,7 @@ import jp.mintjams.tools.io.Closer;
 
 public class Transport implements Closeable {
 
-	private final Closer fCloser = Closer.newCloser();
+	private final Closer fCloser = Closer.create();
 	private final URI fURI;
 	private final String fUsername;
 	private final String fPassword;

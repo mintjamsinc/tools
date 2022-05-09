@@ -26,7 +26,8 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class ByteValueAdapter extends AbstractValueAdapter<Byte> {
 
@@ -54,7 +55,7 @@ public class ByteValueAdapter extends AbstractValueAdapter<Byte> {
 			return numberValue.byteValue();
 		}
 
-		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 		if (stringValue != null) {
 			return new BigDecimal(stringValue).byteValue();
 		}

@@ -26,7 +26,8 @@ import java.sql.Timestamp;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class TimestampValueAdapter extends AbstractValueAdapter<java.sql.Timestamp> {
 
@@ -49,7 +50,7 @@ public class TimestampValueAdapter extends AbstractValueAdapter<java.sql.Timesta
 			return timestampValue;
 		}
 
-		java.util.Date dateValue = new jp.mintjams.tools.internal.util.DateValueAdapter(fEnv).adapt(value);
+		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 		if (dateValue != null) {
 			return new java.sql.Timestamp(dateValue.getTime());
 		}

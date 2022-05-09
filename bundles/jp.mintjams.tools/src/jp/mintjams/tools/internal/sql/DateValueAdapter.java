@@ -25,7 +25,8 @@ package jp.mintjams.tools.internal.sql;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class DateValueAdapter extends AbstractValueAdapter<java.sql.Date> {
 
@@ -48,7 +49,7 @@ public class DateValueAdapter extends AbstractValueAdapter<java.sql.Date> {
 			return sqlDateValue;
 		}
 
-		java.util.Date dateValue = new jp.mintjams.tools.internal.util.DateValueAdapter(fEnv).adapt(value);
+		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 		if (dateValue != null) {
 			return new java.sql.Date(dateValue.getTime());
 		}

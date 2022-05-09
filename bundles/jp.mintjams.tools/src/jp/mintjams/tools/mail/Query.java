@@ -150,7 +150,7 @@ public class Query {
 	}
 
 	private class ResultImpl implements Result {
-		private final Closer fCloser = Closer.newCloser();
+		private final Closer fCloser = Closer.create();
 		private final Session fSession;
 		private final Folder fFolder;
 		private final javax.mail.Message[] fMessages;

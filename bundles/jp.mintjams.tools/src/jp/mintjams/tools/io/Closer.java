@@ -32,8 +32,13 @@ public class Closer extends Vector<Closeable> implements Closeable {
 
 	private Closer() {}
 
-	public static Closer newCloser() {
+	public static Closer create() {
 		return new Closer();
+	}
+
+	@Deprecated
+	public static Closer newCloser() {
+		return create();
 	}
 
 	public synchronized boolean add(AutoCloseable e) {
@@ -42,7 +47,7 @@ public class Closer extends Vector<Closeable> implements Closeable {
 			public void close() throws IOException {
 				try {
 					e.close();
-				} catch (Exception ex) {
+				} catch (Throwable ex) {
 					throw (IOException) new IOException(ex.getMessage()).initCause(ex);
 				}
 			}

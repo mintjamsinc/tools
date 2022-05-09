@@ -25,7 +25,8 @@ package jp.mintjams.tools.internal.lang;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class CharacterValueAdapter extends AbstractValueAdapter<Character> {
 
@@ -48,7 +49,7 @@ public class CharacterValueAdapter extends AbstractValueAdapter<Character> {
 			return characterValue;
 		}
 
-		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 		if (stringValue != null && stringValue.length() > 0) {
 			return stringValue.toCharArray()[0];
 		}

@@ -43,13 +43,13 @@ public class SSLContextBuilder {
 	}
 
 	private KeyManager[] fKeyManagers;
-	public SSLContextBuilder setKeyManager(KeyManager...keyManagers) {
+	public SSLContextBuilder setKeyManager(KeyManager... keyManagers) {
 		fKeyManagers = keyManagers;
 		return this;
 	}
 
 	private TrustManager[] fTrustManagers;
-	public SSLContextBuilder setTrustManager(TrustManager...trustManagers) {
+	public SSLContextBuilder setTrustManager(TrustManager... trustManagers) {
 		fTrustManagers = trustManagers;
 		return this;
 	}

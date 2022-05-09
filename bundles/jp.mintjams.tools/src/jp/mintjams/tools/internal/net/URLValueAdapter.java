@@ -22,13 +22,15 @@
 
 package jp.mintjams.tools.internal.net;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
-import jp.mintjams.tools.internal.lang.StringValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class URLValueAdapter extends AbstractValueAdapter<URL> {
 
@@ -51,7 +53,21 @@ public class URLValueAdapter extends AbstractValueAdapter<URL> {
 			return urlValue;
 		}
 
-		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		File fileValue = Adaptables.getAdapter(value, File.class);
+		if (fileValue != null) {
+			try {
+				return fileValue.toURI().toURL();
+			} catch (MalformedURLException ignore) {}
+		}
+
+		Path pathValue = Adaptables.getAdapter(value, Path.class);
+		if (pathValue != null) {
+			try {
+				return pathValue.toUri().toURL();
+			} catch (MalformedURLException ignore) {}
+		}
+
+		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 		if (stringValue != null) {
 			try {
 				return new URL(stringValue);

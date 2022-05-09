@@ -72,7 +72,7 @@ import jp.mintjams.tools.io.Closer;
 
 public class Message implements Closeable {
 
-	private final Closer fCloser = Closer.newCloser();
+	private final Closer fCloser = Closer.create();
 	private MimeMessage fMessage;
 	private MimeHeaders fMimeHeaders;
 	private final Map<String, String> fContents = new HashMap<>();
@@ -256,7 +256,7 @@ public class Message implements Closeable {
 		return fMimeHeaders;
 	}
 
-	private InternetAddress[] fixPersonal(InternetAddress...addresses) throws MessagingException {
+	private InternetAddress[] fixPersonal(InternetAddress... addresses) throws MessagingException {
 		String charset = getCharset();
 		for (InternetAddress ia : addresses) {
 			try {
@@ -345,7 +345,7 @@ public class Message implements Closeable {
 		return l.toArray(new java.util.Date[l.size()]);
 	}
 
-	private InternetAddress[] toInternetAddress(Address...address) throws MessagingException {
+	private InternetAddress[] toInternetAddress(Address... address) throws MessagingException {
 		List<InternetAddress> l = new ArrayList<>();
 		for (Address e : address) {
 			l.add(InternetAddress.class.cast(e));
@@ -353,7 +353,7 @@ public class Message implements Closeable {
 		return l.toArray(new InternetAddress[l.size()]);
 	}
 
-	private String getEncoded(Address...address) throws MessagingException {
+	private String getEncoded(Address... address) throws MessagingException {
 		InternetAddress[] addresses = toInternetAddress(address);
 		StringBuilder buf = new StringBuilder();
 		for (InternetAddress e : addresses) {
@@ -388,7 +388,7 @@ public class Message implements Closeable {
 		return this;
 	}
 
-	public Message removeHeader(String...names) throws MessagingException {
+	public Message removeHeader(String... names) throws MessagingException {
 		for (String name : names) {
 			fMessage.removeHeader(name);
 			getMimeHeaders().removeValue(name);
@@ -471,7 +471,7 @@ public class Message implements Closeable {
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setTo(Address...addresses) throws MessagingException {
+	public Message setTo(Address... addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.TO, addresses);
 		getMimeHeaders().setEncoded("To", getEncoded(toInternetAddress(addresses)));
 		return this;
@@ -486,7 +486,7 @@ public class Message implements Closeable {
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setCc(Address...addresses) throws MessagingException {
+	public Message setCc(Address... addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.CC, addresses);
 		getMimeHeaders().setEncoded("Cc", getEncoded(toInternetAddress(addresses)));
 		return this;
@@ -501,7 +501,7 @@ public class Message implements Closeable {
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setBcc(Address...addresses) throws MessagingException {
+	public Message setBcc(Address... addresses) throws MessagingException {
 		fMessage.setRecipients(RecipientType.BCC, addresses);
 		getMimeHeaders().setEncoded("Bcc", getEncoded(toInternetAddress(addresses)));
 		return this;
@@ -516,7 +516,7 @@ public class Message implements Closeable {
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
-	public Message setReplyTo(Address...addresses) throws MessagingException {
+	public Message setReplyTo(Address... addresses) throws MessagingException {
 		fMessage.setReplyTo(addresses);
 		getMimeHeaders().setEncoded("Reply-To", getEncoded(toInternetAddress(addresses)));
 		return this;

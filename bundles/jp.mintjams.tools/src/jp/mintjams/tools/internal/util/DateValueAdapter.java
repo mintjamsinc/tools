@@ -30,8 +30,8 @@ import java.time.OffsetTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
-import jp.mintjams.tools.internal.lang.StringValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 
@@ -69,6 +69,11 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			return dateValue;
 		}
 
+		java.util.Calendar calendarValue = Adaptables.getAdapter(value, java.util.Calendar.class);
+		if (calendarValue != null) {
+			return calendarValue.getTime();
+		}
+
 		OffsetDateTime offsetDateTimeValue = Adaptables.getAdapter(value, OffsetDateTime.class);
 		if (offsetDateTimeValue != null) {
 			return Dates.asDate(offsetDateTimeValue);
@@ -99,39 +104,39 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			return Dates.asDate(numberValue.longValue());
 		}
 
-		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 		if (stringValue != null) {
 			try {
 				return Dates.asDate(OffsetDateTime.parse(stringValue));
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 
 			try {
 				return Dates.asDate(LocalDateTime.parse(stringValue), getZoneId());
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 
 			try {
 				return Dates.asDate(LocalDate.parse(stringValue));
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 
 			try {
 				return Dates.asDate(OffsetTime.parse(stringValue));
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 
 			try {
 				return Dates.asDate(LocalTime.parse(stringValue), getZoneId());
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 
 			try {
 				return Dates.asDate(java.sql.Timestamp.valueOf(stringValue));
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 
 			try {
 				return Dates.asDate(java.sql.Date.valueOf(stringValue));
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 
 			try {
 				return Dates.asDate(java.sql.Time.valueOf(stringValue));
-			} catch (Exception ignore) {}
+			} catch (Throwable ignore) {}
 		}
 
 		return null;

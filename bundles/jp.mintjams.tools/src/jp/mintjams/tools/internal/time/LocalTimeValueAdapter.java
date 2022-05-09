@@ -27,7 +27,8 @@ import java.time.LocalTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class LocalTimeValueAdapter extends AbstractValueAdapter<LocalTime> {
 
@@ -50,7 +51,7 @@ public class LocalTimeValueAdapter extends AbstractValueAdapter<LocalTime> {
 			return localTimeValue;
 		}
 
-		java.util.Date dateValue = new jp.mintjams.tools.internal.util.DateValueAdapter(fEnv).adapt(value);
+		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 		if (dateValue != null) {
 			return LocalDateTime.ofInstant(dateValue.toInstant(), getZoneId()).toLocalTime();
 		}

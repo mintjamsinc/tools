@@ -22,151 +22,17 @@
 
 package jp.mintjams.tools.internal.adapter;
 
-import java.nio.charset.Charset;
-import java.time.ZoneId;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone;
 
-import jp.mintjams.tools.adapter.AdaptableValue;
-import jp.mintjams.tools.adapter.ValueAdapter;
-
-public abstract class AbstractValueAdapter<ValueType> implements ValueAdapter<ValueType> {
-
-	protected final Map<String, Object> fEnv;
+@Deprecated
+public abstract class AbstractValueAdapter<ValueType> extends jp.mintjams.tools.adapter.AbstractValueAdapter<ValueType> {
 
 	protected AbstractValueAdapter() {
-		this(new HashMap<>());
+		super();
 	}
 
 	protected AbstractValueAdapter(Map<String, Object> env) {
-		fEnv = env;
-	}
-
-	protected String getEncoding() {
-		String encoding = null;
-		Object o = fEnv.get(ENV_ENCODING);
-		if (o instanceof Charset) {
-			encoding = ((Charset) o).name();
-		} else if (o instanceof String) {
-			encoding = (String) o;
-		}
-		if (encoding == null) {
-			return Charset.defaultCharset().name();
-		}
-		return encoding;
-	}
-
-	protected ZoneId getZoneId() {
-		ZoneId zoneId = null;
-		Object o = fEnv.get(ENV_ZONEID);
-		if (o instanceof ZoneId) {
-			zoneId = (ZoneId) o;
-		} else if (o instanceof String) {
-			zoneId = ZoneId.of((String) o);
-		}
-		if (zoneId == null) {
-			return ZoneId.systemDefault();
-		}
-		return zoneId;
-	}
-
-	protected ZoneId getDisplayZoneId() {
-		ZoneId zoneId = null;
-		Object o = fEnv.get(ENV_DISPLAYZONEID);
-		if (o instanceof ZoneId) {
-			zoneId = (ZoneId) o;
-		} else if (o instanceof String) {
-			zoneId = ZoneId.of((String) o);
-		}
-		if (zoneId == null) {
-			return ZoneId.systemDefault();
-		}
-		return zoneId;
-	}
-
-	@Override
-	public AdaptableValue<ValueType> getAdaptableValue(Object value) {
-		return new AdaptableValueImpl(value);
-	}
-
-	private class AdaptableValueImpl implements AdaptableValue<ValueType> {
-		private final Object fValue;
-
-		private AdaptableValueImpl(Object value) {
-			fValue = value;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setProperty(String key, Object value) {
-			fEnv.put(key, value);
-			return this;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setEncoding(String encoding) {
-			if (!Charset.isSupported(encoding)) {
-				throw new IllegalArgumentException(encoding);
-			}
-
-			setProperty(ENV_ENCODING, encoding);
-			return this;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setEncoding(Charset encoding) {
-			setProperty(ENV_ENCODING, encoding);
-			return null;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setZoneId(String zoneId) {
-			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
-				throw new IllegalArgumentException(zoneId);
-			}
-
-			setProperty(ENV_ZONEID, zoneId);
-			return this;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setZoneId(ZoneId zoneId) {
-			setProperty(ENV_ZONEID, zoneId);
-			return this;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setZoneId(TimeZone timeZone) {
-			setProperty(ENV_ZONEID, timeZone.toZoneId());
-			return this;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setDisplayZoneId(String zoneId) {
-			if (!ZoneId.getAvailableZoneIds().contains(zoneId)) {
-				throw new IllegalArgumentException(zoneId);
-			}
-
-			setProperty(ENV_DISPLAYZONEID, zoneId);
-			return this;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setDisplayZoneId(ZoneId zoneId) {
-			setProperty(ENV_DISPLAYZONEID, zoneId);
-			return this;
-		}
-
-		@Override
-		public AdaptableValue<ValueType> setDisplayZoneId(TimeZone timeZone) {
-			setProperty(ENV_DISPLAYZONEID, timeZone.toZoneId());
-			return this;
-		}
-
-		@Override
-		public ValueType getValue() {
-			return adapt(fValue);
-		}
+		super(env);
 	}
 
 }

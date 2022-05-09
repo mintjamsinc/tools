@@ -54,7 +54,7 @@ public class SQLStatement implements Closeable, Adaptable {
 	private StringBuilder fSQL = new StringBuilder();
 	private List<SQLVariable> fSQLVariableList = new ArrayList<>();
 	private ParameterHandler fParameterHandler;
-	private final Closer fCloser = Closer.newCloser();
+	private final Closer fCloser = Closer.create();
 	private PreparedStatement fPreparedStatement;
 
 	private SQLStatement(Builder builder) {

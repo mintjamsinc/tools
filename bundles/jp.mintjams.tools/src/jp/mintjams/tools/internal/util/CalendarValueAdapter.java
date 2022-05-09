@@ -20,39 +20,40 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.internal.time;
+package jp.mintjams.tools.internal.util;
 
-import java.time.OffsetTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
-public class OffsetTimeValueAdapter extends AbstractValueAdapter<OffsetTime> {
+public class CalendarValueAdapter extends AbstractValueAdapter<java.util.Calendar> {
 
-	public OffsetTimeValueAdapter() {
+	public CalendarValueAdapter() {
 		super();
 	}
 
-	public OffsetTimeValueAdapter(Map<String, Object> env) {
+	public CalendarValueAdapter(Map<String, Object> env) {
 		super(env);
 	}
 
 	@Override
-	public OffsetTime adapt(Object value) {
+	public java.util.Calendar adapt(Object value) {
 		if (value == null) {
 			return null;
 		}
 
-		OffsetTime offsetTimeValue = Adaptables.getAdapter(value, OffsetTime.class);
-		if (offsetTimeValue != null) {
-			return offsetTimeValue;
+		java.util.Calendar calendarValue = Adaptables.getAdapter(value, java.util.Calendar.class);
+		if (calendarValue != null) {
+			return calendarValue;
 		}
 
 		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 		if (dateValue != null) {
-			return OffsetTime.ofInstant(dateValue.toInstant(), getZoneId());
+			calendarValue = java.util.Calendar.getInstance();
+			calendarValue.setTime(dateValue);
+			return calendarValue;
 		}
 
 		return null;

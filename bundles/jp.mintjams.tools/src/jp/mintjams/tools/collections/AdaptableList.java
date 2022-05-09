@@ -27,8 +27,6 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -37,6 +35,7 @@ import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -46,26 +45,7 @@ import java.util.TimeZone;
 
 import jp.mintjams.tools.adapter.AdaptableValue;
 import jp.mintjams.tools.adapter.ValueAdapter;
-import jp.mintjams.tools.internal.io.InputStreamValueAdapter;
-import jp.mintjams.tools.internal.io.ReaderValueAdapter;
-import jp.mintjams.tools.internal.lang.BigDecimalValueAdapter;
-import jp.mintjams.tools.internal.lang.BigIntegerValueAdapter;
-import jp.mintjams.tools.internal.lang.BooleanValueAdapter;
-import jp.mintjams.tools.internal.lang.ByteValueAdapter;
-import jp.mintjams.tools.internal.lang.CharacterValueAdapter;
-import jp.mintjams.tools.internal.lang.DoubleValueAdapter;
-import jp.mintjams.tools.internal.lang.FloatValueAdapter;
-import jp.mintjams.tools.internal.lang.IntegerValueAdapter;
-import jp.mintjams.tools.internal.lang.LongValueAdapter;
-import jp.mintjams.tools.internal.lang.ShortValueAdapter;
-import jp.mintjams.tools.internal.lang.StringValueAdapter;
-import jp.mintjams.tools.internal.sql.TimeValueAdapter;
-import jp.mintjams.tools.internal.sql.TimestampValueAdapter;
-import jp.mintjams.tools.internal.time.LocalDateTimeValueAdapter;
-import jp.mintjams.tools.internal.time.LocalDateValueAdapter;
-import jp.mintjams.tools.internal.time.LocalTimeValueAdapter;
-import jp.mintjams.tools.internal.time.OffsetDateTimeValueAdapter;
-import jp.mintjams.tools.internal.time.OffsetTimeValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
 
 public class AdaptableList<E> implements List<E> {
 
@@ -209,12 +189,12 @@ public class AdaptableList<E> implements List<E> {
 		return adapt(index, valueType, env);
 	}
 
-	@SuppressWarnings("unchecked")
 	public <ValueType> AdaptableValue<ValueType> adapt(int index, Class<ValueType> valueType, HashMap<String, Object> env) {
 		Class<? extends ValueAdapter<?>> valueAdapterType = fValueAdapterMap.get(valueType);
 		if (valueAdapterType != null) {
 			if (env == null) {
 				env = new HashMap<>();
+				env.put(ValueAdapter.ENV_VALUEADAPTERS, Collections.unmodifiableMap(fValueAdapterMap));
 			}
 			for (Map.Entry<String, Object> e : fEnv.entrySet()) {
 				if (!env.containsKey(e.getKey())) {
@@ -222,7 +202,7 @@ public class AdaptableList<E> implements List<E> {
 				}
 			}
 			try {
-				return (AdaptableValue<ValueType>) valueAdapterType.getConstructor(Map.class).newInstance(env).getAdaptableValue(get(index));
+				return (AdaptableValue<ValueType>) ValueAdapters.createValueAdapter(env, valueType).getAdaptableValue(get(index));
 			} catch (Throwable ignore) {}
 		}
 
@@ -311,39 +291,18 @@ public class AdaptableList<E> implements List<E> {
 
 	public static class Builder<E> {
 		private final List<E> fList = new ArrayList<>();
-		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap = new HashMap<>();
+		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap;
 		private final Map<String, Object> fEnv = new HashMap<>();
 
 		private Builder() {
-			fValueAdapterMap.put(BigDecimal.class, BigDecimalValueAdapter.class);
-			fValueAdapterMap.put(BigInteger.class, BigIntegerValueAdapter.class);
-			fValueAdapterMap.put(Boolean.class, BooleanValueAdapter.class);
-			fValueAdapterMap.put(Byte.class, ByteValueAdapter.class);
-			fValueAdapterMap.put(Character.class, CharacterValueAdapter.class);
-			fValueAdapterMap.put(java.util.Date.class, jp.mintjams.tools.internal.util.DateValueAdapter.class);
-			fValueAdapterMap.put(Double.class, DoubleValueAdapter.class);
-			fValueAdapterMap.put(Float.class, FloatValueAdapter.class);
-			fValueAdapterMap.put(InputStream.class, InputStreamValueAdapter.class);
-			fValueAdapterMap.put(Integer.class, IntegerValueAdapter.class);
-			fValueAdapterMap.put(Long.class, LongValueAdapter.class);
-			fValueAdapterMap.put(Reader.class, ReaderValueAdapter.class);
-			fValueAdapterMap.put(Short.class, ShortValueAdapter.class);
-			fValueAdapterMap.put(String.class, StringValueAdapter.class);
-			fValueAdapterMap.put(java.sql.Date.class, jp.mintjams.tools.internal.sql.DateValueAdapter.class);
-			fValueAdapterMap.put(Timestamp.class, TimestampValueAdapter.class);
-			fValueAdapterMap.put(Time.class, TimeValueAdapter.class);
-			fValueAdapterMap.put(OffsetDateTime.class, OffsetDateTimeValueAdapter.class);
-			fValueAdapterMap.put(LocalDateTime.class, LocalDateTimeValueAdapter.class);
-			fValueAdapterMap.put(LocalDate.class, LocalDateValueAdapter.class);
-			fValueAdapterMap.put(OffsetTime.class, OffsetTimeValueAdapter.class);
-			fValueAdapterMap.put(LocalTime.class, LocalTimeValueAdapter.class);
+			fValueAdapterMap = ValueAdapters.createValueAdapterMap();
 		}
 
 		public static <E> Builder<E> create() {
 			return new Builder<>();
 		}
 
-		public <ValueType> Builder<E> setValueAdapter(Class<ValueType> valueType, Class<ValueAdapter<ValueType>> valueAdapterType) {
+		public <ValueType> Builder<E> setValueAdapter(Class<ValueType> valueType, Class<? extends ValueAdapter<ValueType>> valueAdapterType) {
 			fValueAdapterMap.put(valueType, valueAdapterType);
 			return this;
 		}

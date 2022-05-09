@@ -188,7 +188,7 @@ public class Query {
 	private class ResultImpl implements Result {
 		private final ResultSet fResultSet;
 		private final ResultSetMetaData fMetadata;
-		private final Closer fCloser = Closer.newCloser();
+		private final Closer fCloser = Closer.create();
 		private boolean fHasNext;
 		private int fRows = 0;
 

@@ -20,39 +20,57 @@
  * SOFTWARE.
  */
 
-package jp.mintjams.tools.internal.time;
+package jp.mintjams.tools.internal.io;
 
-import java.time.OffsetTime;
+import java.io.File;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
-public class OffsetTimeValueAdapter extends AbstractValueAdapter<OffsetTime> {
+public class FileValueAdapter extends AbstractValueAdapter<File> {
 
-	public OffsetTimeValueAdapter() {
+	public FileValueAdapter() {
 		super();
 	}
 
-	public OffsetTimeValueAdapter(Map<String, Object> env) {
+	public FileValueAdapter(Map<String, Object> env) {
 		super(env);
 	}
 
 	@Override
-	public OffsetTime adapt(Object value) {
+	public File adapt(Object value) {
 		if (value == null) {
 			return null;
 		}
 
-		OffsetTime offsetTimeValue = Adaptables.getAdapter(value, OffsetTime.class);
-		if (offsetTimeValue != null) {
-			return offsetTimeValue;
+		File fileValue = Adaptables.getAdapter(value, File.class);
+		if (fileValue != null) {
+			return fileValue;
 		}
 
-		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
-		if (dateValue != null) {
-			return OffsetTime.ofInstant(dateValue.toInstant(), getZoneId());
+		Path pathValue = Adaptables.getAdapter(value, Path.class);
+		if (pathValue != null) {
+			return pathValue.toFile();
+		}
+
+		URL urlValue = Adaptables.getAdapter(value, URL.class);
+		if (urlValue != null) {
+			return new File(urlValue.getPath());
+		}
+
+		URI uriValue = Adaptables.getAdapter(value, URI.class);
+		if (uriValue != null) {
+			return new File(uriValue.getPath());
+		}
+
+		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
+		if (stringValue != null) {
+			return new File(stringValue);
 		}
 
 		return null;

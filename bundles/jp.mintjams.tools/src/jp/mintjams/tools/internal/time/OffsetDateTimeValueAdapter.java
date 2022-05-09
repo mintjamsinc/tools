@@ -26,7 +26,8 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class OffsetDateTimeValueAdapter extends AbstractValueAdapter<OffsetDateTime> {
 
@@ -49,7 +50,7 @@ public class OffsetDateTimeValueAdapter extends AbstractValueAdapter<OffsetDateT
 			return offsetDateTimeValue;
 		}
 
-		java.util.Date dateValue = new jp.mintjams.tools.internal.util.DateValueAdapter(fEnv).adapt(value);
+		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 		if (dateValue != null) {
 			return OffsetDateTime.ofInstant(dateValue.toInstant(), getZoneId());
 		}

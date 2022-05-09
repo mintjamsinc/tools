@@ -28,6 +28,9 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -37,8 +40,8 @@ import java.time.temporal.Temporal;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
-import jp.mintjams.tools.internal.io.ReaderValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.internal.util.Dates;
 
 public class StringValueAdapter extends AbstractValueAdapter<String> {
@@ -62,7 +65,7 @@ public class StringValueAdapter extends AbstractValueAdapter<String> {
 			return stringValue;
 		}
 
-		Reader reader = new ReaderValueAdapter(fEnv).adapt(value);
+		Reader reader = ValueAdapters.createValueAdapter(fEnv, Reader.class).adapt(value);
 		if (reader != null) {
 			try {
 				return asString(reader);
@@ -81,6 +84,18 @@ public class StringValueAdapter extends AbstractValueAdapter<String> {
 
 		if (value instanceof Number) {
 			return asString((Number) value);
+		}
+
+		if (value instanceof URI) {
+			return ((URI) value).toASCIIString();
+		}
+
+		if (value instanceof URL) {
+			try {
+				return ((URL) value).toURI().toASCIIString();
+			} catch (URISyntaxException ex) {
+				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
+			}
 		}
 
 		return value.toString();

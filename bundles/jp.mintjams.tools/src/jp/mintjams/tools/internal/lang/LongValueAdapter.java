@@ -32,7 +32,8 @@ import java.time.temporal.Temporal;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.internal.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
+import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.internal.util.Dates;
 
 public class LongValueAdapter extends AbstractValueAdapter<Long> {
@@ -70,7 +71,7 @@ public class LongValueAdapter extends AbstractValueAdapter<Long> {
 			return asDate((Temporal) value).getTime();
 		}
 
-		String stringValue = new StringValueAdapter(fEnv).adapt(value);
+		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 		if (stringValue != null) {
 			return new BigDecimal(stringValue).longValue();
 		}
