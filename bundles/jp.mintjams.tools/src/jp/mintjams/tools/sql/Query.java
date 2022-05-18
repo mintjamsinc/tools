@@ -131,15 +131,24 @@ public class Query {
 		return new ResultImpl(rs, stmt);
 	}
 
+	public static Builder newBuilder(Connection connection) {
+		return Builder.create(connection);
+	}
+
+	@Deprecated
 	public static Builder newBuilder() {
-		return Builder.create();
+		return Builder.create(null);
 	}
 
 	public static class Builder {
-		private Builder() {}
+		private Connection fConnection;
 
-		public static Builder create() {
-			return new Builder();
+		private Builder(Connection connection) {
+			fConnection = connection;
+		}
+
+		public static Builder create(Connection connection) {
+			return new Builder(connection);
 		}
 
 		private String fStatement;
@@ -158,7 +167,7 @@ public class Query {
 			return this;
 		}
 
-		private Connection fConnection;
+		@Deprecated
 		public Builder setConnection(Connection connection) {
 			fConnection = connection;
 			return this;

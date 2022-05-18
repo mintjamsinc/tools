@@ -179,10 +179,9 @@ public class Entity {
 		sql.append("SELECT * FROM ").append(fTableName);
 		sql.append(createWhereClause(variables, true));
 
-		return Query.newBuilder()
+		return Query.newBuilder(fConnection)
 				.setStatement(sql.toString())
 				.setVariables(variables)
-				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.setResultHandler(fResultHandler)
 				.build();
@@ -195,10 +194,9 @@ public class Entity {
 		sql.append("SELECT * FROM ").append(fTableName);
 		sql.append(createWhereClause(variables, false));
 
-		return Query.newBuilder()
+		return Query.newBuilder(fConnection)
 				.setStatement(sql.toString())
 				.setVariables(variables)
-				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.setResultHandler(fResultHandler)
 				.build();
@@ -235,10 +233,9 @@ public class Entity {
 		}
 		sql.append(")");
 
-		return Update.newBuilder()
+		return Update.newBuilder(fConnection)
 				.setStatement(sql.toString())
 				.setVariables(variables)
-				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -252,10 +249,9 @@ public class Entity {
 		sql.append(createSetCommand(variables));
 		sql.append(createWhereClause(variables, cnds, true));
 
-		return Update.newBuilder()
+		return Update.newBuilder(fConnection)
 				.setStatement(sql.toString())
 				.setVariables(variables)
-				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -269,10 +265,9 @@ public class Entity {
 		sql.append(createSetCommand(variables));
 		sql.append(createWhereClause(variables, cnds, false));
 
-		return Update.newBuilder()
+		return Update.newBuilder(fConnection)
 				.setStatement(sql.toString())
 				.setVariables(variables)
-				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -284,10 +279,9 @@ public class Entity {
 		sql.append("DELETE FROM ").append(fTableName);
 		sql.append(createWhereClause(variables, true));
 
-		return Update.newBuilder()
+		return Update.newBuilder(fConnection)
 				.setStatement(sql.toString())
 				.setVariables(variables)
-				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -299,10 +293,9 @@ public class Entity {
 		sql.append("DELETE FROM ").append(fTableName);
 		sql.append(createWhereClause(variables, false));
 
-		return Update.newBuilder()
+		return Update.newBuilder(fConnection)
 				.setStatement(sql.toString())
 				.setVariables(variables)
-				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
@@ -373,15 +366,24 @@ public class Entity {
 		return sql.toString();
 	}
 
+	public static Builder newBuilder(Connection connection) {
+		return Builder.create(connection);
+	}
+
+	@Deprecated
 	public static Builder newBuilder() {
-		return Builder.create();
+		return Builder.create(null);
 	}
 
 	public static class Builder {
-		private Builder() {}
+		private Connection fConnection;
 
-		public static Builder create() {
-			return new Builder();
+		private Builder(Connection connection) {
+			fConnection = connection;
+		}
+
+		public static Builder create(Connection connection) {
+			return new Builder(connection);
 		}
 
 		private String fName;
@@ -390,7 +392,7 @@ public class Entity {
 			return this;
 		}
 
-		private Connection fConnection;
+		@Deprecated
 		public Builder setConnection(Connection connection) {
 			fConnection = connection;
 			return this;
