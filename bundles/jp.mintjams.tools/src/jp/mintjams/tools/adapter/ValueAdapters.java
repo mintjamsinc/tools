@@ -51,6 +51,7 @@ import jp.mintjams.tools.internal.lang.DoubleValueAdapter;
 import jp.mintjams.tools.internal.lang.FloatValueAdapter;
 import jp.mintjams.tools.internal.lang.IntegerValueAdapter;
 import jp.mintjams.tools.internal.lang.LongValueAdapter;
+import jp.mintjams.tools.internal.lang.ObjectArrayValueAdapter;
 import jp.mintjams.tools.internal.lang.ShortValueAdapter;
 import jp.mintjams.tools.internal.lang.StringValueAdapter;
 import jp.mintjams.tools.internal.net.URIValueAdapter;
@@ -81,6 +82,7 @@ public class ValueAdapters {
 		m.put(InputStream.class, InputStreamValueAdapter.class);
 		m.put(Integer.class, IntegerValueAdapter.class);
 		m.put(Long.class, LongValueAdapter.class);
+		m.put(Object[].class, ObjectArrayValueAdapter.class);
 		m.put(Reader.class, ReaderValueAdapter.class);
 		m.put(Short.class, ShortValueAdapter.class);
 		m.put(String.class, StringValueAdapter.class);

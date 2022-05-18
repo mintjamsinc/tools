@@ -117,8 +117,7 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 	}
 
 	public <ValueType> AdaptableValue<ValueType> adapt(Object key, Class<ValueType> valueType) {
-		HashMap<String, Object> env = new HashMap<>();
-		return adapt(key, valueType, env);
+		return adapt(key, valueType, null);
 	}
 
 	public <ValueType> AdaptableValue<ValueType> adapt(Object key, Class<ValueType> valueType, HashMap<String, Object> env) {
@@ -126,6 +125,8 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 		if (valueAdapterType != null) {
 			if (env == null) {
 				env = new HashMap<>();
+			}
+			if (!env.containsKey(ValueAdapter.ENV_VALUEADAPTERS)) {
 				env.put(ValueAdapter.ENV_VALUEADAPTERS, Collections.unmodifiableMap(fValueAdapterMap));
 			}
 			for (Map.Entry<String, Object> e : fEnv.entrySet()) {
@@ -171,6 +172,10 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 
 	public Float getFloat(Object key) {
 		return adapt(key, Float.class).getValue();
+	}
+
+	public Object[] getObjectArray(Object key) {
+		return adapt(key, Object[].class).getValue();
 	}
 
 	public InputStream getInputStream(Object key) {

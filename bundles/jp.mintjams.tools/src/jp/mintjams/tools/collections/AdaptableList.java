@@ -185,8 +185,7 @@ public class AdaptableList<E> implements List<E> {
 	}
 
 	public <ValueType> AdaptableValue<ValueType> adapt(int index, Class<ValueType> valueType) {
-		HashMap<String, Object> env = new HashMap<>();
-		return adapt(index, valueType, env);
+		return adapt(index, valueType, null);
 	}
 
 	public <ValueType> AdaptableValue<ValueType> adapt(int index, Class<ValueType> valueType, HashMap<String, Object> env) {
@@ -194,6 +193,8 @@ public class AdaptableList<E> implements List<E> {
 		if (valueAdapterType != null) {
 			if (env == null) {
 				env = new HashMap<>();
+			}
+			if (!env.containsKey(ValueAdapter.ENV_VALUEADAPTERS)) {
 				env.put(ValueAdapter.ENV_VALUEADAPTERS, Collections.unmodifiableMap(fValueAdapterMap));
 			}
 			for (Map.Entry<String, Object> e : fEnv.entrySet()) {
@@ -239,6 +240,10 @@ public class AdaptableList<E> implements List<E> {
 
 	public Float getFloat(int index) {
 		return adapt(index, Float.class).getValue();
+	}
+
+	public Object[] getObjectArray(int index) {
+		return adapt(index, Object[].class).getValue();
 	}
 
 	public InputStream getInputStream(int index) {
