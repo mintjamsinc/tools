@@ -192,14 +192,18 @@ public class Query {
 		}
 	}
 
-	public interface Result extends Iterable<AdaptableMap<String, Object>>, Closeable {}
+	public interface Result extends Iterable<AdaptableMap<String, Object>>, Closeable {
+		int getRow();
+
+		void skip(int skipNum);
+	}
 
 	private class ResultImpl implements Result {
 		private final ResultSet fResultSet;
 		private final ResultSetMetaData fMetadata;
 		private final Closer fCloser = Closer.create();
 		private boolean fHasNext;
-		private int fRows = 0;
+		private int fRow = 0;
 
 		private Iterator<AdaptableMap<String, Object>> fIterator = new Iterator<AdaptableMap<String,Object>>() {
 			@Override
@@ -232,8 +236,8 @@ public class Query {
 					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 				}
 
-				fRows++;
-				if (fHasNext && (fLimit != null) && (fRows >= fLimit)) {
+				fRow++;
+				if (fHasNext && (fLimit != null) && (fRow >= fLimit)) {
 					fHasNext = false;
 				}
 
@@ -262,6 +266,31 @@ public class Query {
 		@Override
 		public Iterator<AdaptableMap<String, Object>> iterator() {
 			return fIterator;
+		}
+
+		@Override
+		public int getRow() {
+			return fRow;
+		}
+
+		@Override
+		public void skip(int skipNum) {
+			try {
+				for (int i = 0; i < skipNum; i++) {
+					fHasNext = fResultSet.next();
+					if (!fHasNext) {
+						break;
+					}
+
+					fRow++;
+					if ((fLimit != null) && (fRow >= fLimit)) {
+						fHasNext = false;
+						break;
+					}
+				}
+			} catch (SQLException ex) {
+				throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+			}
 		}
 
 		@Override

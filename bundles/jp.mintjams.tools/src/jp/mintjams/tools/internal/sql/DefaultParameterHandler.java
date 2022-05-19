@@ -42,6 +42,7 @@ import jp.mintjams.tools.internal.lang.DoubleValueAdapter;
 import jp.mintjams.tools.internal.lang.FloatValueAdapter;
 import jp.mintjams.tools.internal.lang.IntegerValueAdapter;
 import jp.mintjams.tools.internal.lang.LongValueAdapter;
+import jp.mintjams.tools.internal.lang.ObjectArrayValueAdapter;
 import jp.mintjams.tools.internal.lang.ShortValueAdapter;
 import jp.mintjams.tools.internal.lang.StringValueAdapter;
 import jp.mintjams.tools.sql.ParameterHandler;
@@ -308,7 +309,12 @@ public class DefaultParameterHandler implements ParameterHandler {
 		ARRAY(Types.ARRAY) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
-				throw new UnsupportedOperationException("Not yet implemented.");
+				Object[] value = new ObjectArrayValueAdapter(createEnv(context)).adapt(context.getValue());
+				if (value == null) {
+					context.getStatement().setNull(context.getIndex(), context.getType());
+					return;
+				}
+				context.getStatement().setObject(context.getIndex(), value);
 			}
 		},
 		BLOB(Types.BLOB) {

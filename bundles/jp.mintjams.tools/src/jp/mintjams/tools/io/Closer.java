@@ -64,6 +64,16 @@ public class Closer extends Vector<Closeable> implements Closeable {
 		return e;
 	}
 
+	public synchronized <C extends Closeable> C unregister(C e) {
+		remove(e);
+		return e;
+	}
+
+	public synchronized <C extends AutoCloseable> C unregister(C e) {
+		remove(e);
+		return e;
+	}
+
 	@Override
 	public synchronized void close() throws IOException {
 		while (!isEmpty()) {

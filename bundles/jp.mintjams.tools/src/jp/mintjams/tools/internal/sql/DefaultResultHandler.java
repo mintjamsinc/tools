@@ -22,9 +22,12 @@
 
 package jp.mintjams.tools.internal.sql;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.ResultSetMetaData;
@@ -295,7 +298,23 @@ public class DefaultResultHandler implements ResultHandler {
 		ARRAY(Types.ARRAY) {
 			@Override
 			public Object getValue(ResultContext context, int columnIndex) throws SQLException {
-				throw new UnsupportedOperationException("Not yet implemented.");
+				Object o = context.getResultSet().getObject(columnIndex);
+				if (context.getResultSet().wasNull()) {
+					return null;
+				}
+
+				if (o instanceof Array) {
+					context.registerCloseable(new Closeable() {
+						@Override
+						public void close() throws IOException {
+							try {
+								((Array) o).free();
+							} catch (Throwable ignore) {}
+						}
+					});
+				}
+
+				return o;
 			}
 		},
 		BLOB(Types.BLOB) {

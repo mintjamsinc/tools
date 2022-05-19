@@ -9,6 +9,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: jp.mintjams.tools.adapter;version="1.1.0",
  jp.mintjams.tools.collections;version="1.1.0",
  jp.mintjams.tools.io;version="1.1.0",
+ jp.mintjams.tools.lang;version="1.2.0",
  jp.mintjams.tools.mail;version="1.1.0",
  jp.mintjams.tools.osgi;version="1.2.0",
  jp.mintjams.tools.sql;version="1.1.0"
