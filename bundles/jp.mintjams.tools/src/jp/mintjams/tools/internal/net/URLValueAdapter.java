@@ -23,12 +23,14 @@
 package jp.mintjams.tools.internal.net;
 
 import java.io.File;
+import java.lang.reflect.ParameterizedType;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -67,14 +69,16 @@ public class URLValueAdapter extends AbstractValueAdapter<URL> {
 			} catch (MalformedURLException ignore) {}
 		}
 
-		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
-		if (stringValue != null) {
+		try {
+			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 			try {
 				return new URL(stringValue);
 			} catch (MalformedURLException ignore) {}
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

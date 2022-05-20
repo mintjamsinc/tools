@@ -22,12 +22,14 @@
 
 package jp.mintjams.tools.internal.lang;
 
+import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
+import jp.mintjams.tools.adapter.ValueAdapters;
 
 public class ByteValueAdapter extends AbstractValueAdapter<Byte> {
 
@@ -55,12 +57,14 @@ public class ByteValueAdapter extends AbstractValueAdapter<Byte> {
 			return numberValue.byteValue();
 		}
 
-		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
-		if (stringValue != null) {
+		try {
+			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 			return new BigDecimal(stringValue).byteValue();
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

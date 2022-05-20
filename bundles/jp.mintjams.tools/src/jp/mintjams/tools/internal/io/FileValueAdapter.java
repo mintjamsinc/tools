@@ -23,12 +23,14 @@
 package jp.mintjams.tools.internal.io;
 
 import java.io.File;
+import java.lang.reflect.ParameterizedType;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -68,12 +70,14 @@ public class FileValueAdapter extends AbstractValueAdapter<File> {
 			return new File(uriValue.getPath());
 		}
 
-		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
-		if (stringValue != null) {
+		try {
+			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 			return new File(stringValue);
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

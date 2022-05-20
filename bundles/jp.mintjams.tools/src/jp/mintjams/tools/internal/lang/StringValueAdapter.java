@@ -40,6 +40,7 @@ import java.time.temporal.Temporal;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 import jp.mintjams.tools.internal.util.Dates;
@@ -65,14 +66,14 @@ public class StringValueAdapter extends AbstractValueAdapter<String> {
 			return stringValue;
 		}
 
-		Reader reader = ValueAdapters.createValueAdapter(fEnv, Reader.class).adapt(value);
-		if (reader != null) {
+		try {
+			Reader reader = ValueAdapters.createValueAdapter(fEnv, Reader.class).adapt(value);
 			try {
 				return asString(reader);
 			} catch (IOException ex) {
 				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
 			}
-		}
+		} catch (UnadaptableValueException ignore) {}
 
 		if (value instanceof java.util.Date) {
 			return formatDateTime((java.util.Date) value);

@@ -30,11 +30,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.ParameterizedType;
 import java.sql.Clob;
 import java.sql.SQLException;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
 public class ReaderValueAdapter extends AbstractValueAdapter<Reader> {
@@ -99,7 +101,9 @@ public class ReaderValueAdapter extends AbstractValueAdapter<Reader> {
 			return new StringReader(stringValue);
 		}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

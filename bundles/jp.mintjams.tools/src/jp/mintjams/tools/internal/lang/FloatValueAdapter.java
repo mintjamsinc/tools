@@ -22,10 +22,12 @@
 
 package jp.mintjams.tools.internal.lang;
 
+import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -55,12 +57,14 @@ public class FloatValueAdapter extends AbstractValueAdapter<Float> {
 			return numberValue.floatValue();
 		}
 
-		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
-		if (stringValue != null) {
+		try {
+			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 			return new BigDecimal(stringValue).floatValue();
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

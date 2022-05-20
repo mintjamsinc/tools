@@ -22,6 +22,7 @@
 
 package jp.mintjams.tools.internal.lang;
 
+import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -32,9 +33,10 @@ import java.time.OffsetTime;
 import java.time.temporal.Temporal;
 import java.util.Map;
 
-import jp.mintjams.tools.adapter.Adaptables;
-import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
+import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
+import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.internal.util.Dates;
 
 public class BigIntegerValueAdapter extends AbstractValueAdapter<BigInteger> {
@@ -72,12 +74,14 @@ public class BigIntegerValueAdapter extends AbstractValueAdapter<BigInteger> {
 			return BigInteger.valueOf(asDate((Temporal) value).getTime());
 		}
 
-		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
-		if (stringValue != null) {
+		try {
+			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 			return BigInteger.valueOf(new BigDecimal(stringValue).longValue());
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 	private java.util.Date asDate(Temporal value) {

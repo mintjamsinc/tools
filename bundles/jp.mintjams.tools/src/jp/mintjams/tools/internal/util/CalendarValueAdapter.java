@@ -22,9 +22,11 @@
 
 package jp.mintjams.tools.internal.util;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -49,14 +51,16 @@ public class CalendarValueAdapter extends AbstractValueAdapter<java.util.Calenda
 			return calendarValue;
 		}
 
-		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
-		if (dateValue != null) {
+		try {
+			java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 			calendarValue = java.util.Calendar.getInstance();
 			calendarValue.setTime(dateValue);
 			return calendarValue;
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

@@ -22,6 +22,7 @@
 
 package jp.mintjams.tools.internal.util;
 
+import java.lang.reflect.ParameterizedType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,6 +31,7 @@ import java.time.OffsetTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -104,8 +106,8 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			return Dates.asDate(numberValue.longValue());
 		}
 
-		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
-		if (stringValue != null) {
+		try {
+			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 			try {
 				return Dates.asDate(OffsetDateTime.parse(stringValue));
 			} catch (Throwable ignore) {}
@@ -137,9 +139,11 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			try {
 				return Dates.asDate(java.sql.Time.valueOf(stringValue));
 			} catch (Throwable ignore) {}
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

@@ -22,11 +22,13 @@
 
 package jp.mintjams.tools.internal.time;
 
+import java.lang.reflect.ParameterizedType;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -51,12 +53,14 @@ public class LocalTimeValueAdapter extends AbstractValueAdapter<LocalTime> {
 			return localTimeValue;
 		}
 
-		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
-		if (dateValue != null) {
+		try {
+			java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 			return LocalDateTime.ofInstant(dateValue.toInstant(), getZoneId()).toLocalTime();
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

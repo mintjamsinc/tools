@@ -22,9 +22,11 @@
 
 package jp.mintjams.tools.internal.lang;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -49,12 +51,16 @@ public class CharacterValueAdapter extends AbstractValueAdapter<Character> {
 			return characterValue;
 		}
 
-		String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
-		if (stringValue != null && stringValue.length() > 0) {
-			return stringValue.toCharArray()[0];
-		}
+		try {
+			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
+			if (stringValue.length() > 0) {
+				return stringValue.toCharArray()[0];
+			}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }

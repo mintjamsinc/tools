@@ -22,10 +22,12 @@
 
 package jp.mintjams.tools.internal.time;
 
+import java.lang.reflect.ParameterizedType;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
+import jp.mintjams.tools.adapter.UnadaptableValueException;
 import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.adapter.AbstractValueAdapter;
 
@@ -50,12 +52,14 @@ public class OffsetDateTimeValueAdapter extends AbstractValueAdapter<OffsetDateT
 			return offsetDateTimeValue;
 		}
 
-		java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
-		if (dateValue != null) {
+		try {
+			java.util.Date dateValue = ValueAdapters.createValueAdapter(fEnv, java.util.Date.class).adapt(value);
 			return OffsetDateTime.ofInstant(dateValue.toInstant(), getZoneId());
-		}
+		} catch (UnadaptableValueException ignore) {}
 
-		return null;
+		throw new UnadaptableValueException("Value cannot adapt to type \""
+				+ ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0].getTypeName()
+				+ "\"");
 	}
 
 }
