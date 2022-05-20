@@ -35,10 +35,12 @@ import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.TreeMap;
 
 import jp.mintjams.tools.adapter.AdaptableValue;
 import jp.mintjams.tools.adapter.ValueAdapter;
@@ -226,17 +228,30 @@ public class AdaptableMap<K, V> implements Map<K, V> {
 		return Builder.<K, V>create();
 	}
 
+	public static <K, V> Builder<K, V> newBuilder(Comparator<? super K> comparator) {
+		return Builder.<K, V>create(comparator);
+	}
+
 	public static class Builder<K, V> {
-		private final Map<K, V> fMap = new HashMap<>();
+		private final Map<K, V> fMap;
 		private final Map<Class<?>, Class<? extends ValueAdapter<?>>> fValueAdapterMap;
 		private final Map<String, Object> fEnv = new HashMap<>();
 
-		private Builder() {
+		private Builder(Comparator<? super K> comparator) {
+			if (comparator != null) {
+				fMap = new TreeMap<>(comparator);
+			} else {
+				fMap = new TreeMap<>();
+			}
 			fValueAdapterMap = ValueAdapters.createValueAdapterMap();
 		}
 
 		public static <K, V> Builder<K, V> create() {
-			return new Builder<>();
+			return new Builder<>(null);
+		}
+
+		public static <K, V> Builder<K, V> create(Comparator<? super K> comparator) {
+			return new Builder<>(comparator);
 		}
 
 		public <ValueType> Builder<K, V> setValueAdapter(Class<ValueType> valueType, Class<ValueAdapter<ValueType>> valueAdapterType) {

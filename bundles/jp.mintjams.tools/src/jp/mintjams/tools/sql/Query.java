@@ -228,7 +228,7 @@ public class Query {
 				} catch (SQLException ex) {
 					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 				}
-				AdaptableMap<String, Object> result = AdaptableMap.<String, Object>newBuilder().putAll(columns).build();
+				AdaptableMap<String, Object> result = AdaptableMap.<String, Object>newBuilder(String.CASE_INSENSITIVE_ORDER).putAll(columns).build();
 
 				try {
 					fHasNext = fResultSet.next();
