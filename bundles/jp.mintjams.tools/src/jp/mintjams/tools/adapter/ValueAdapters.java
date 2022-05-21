@@ -102,6 +102,9 @@ public class ValueAdapters {
 	@SuppressWarnings("unchecked")
 	public static <ValueType> ValueAdapter<ValueType> createValueAdapter(Map<String, Object> env, Class<ValueType> valueType) {
 		Map<Class<?>, Class<? extends ValueAdapter<?>>> valueAdapters = (Map<Class<?>, Class<? extends ValueAdapter<?>>>) env.get(ValueAdapter.ENV_VALUEADAPTERS);
+		if (valueAdapters == null) {
+			valueAdapters = createValueAdapterMap();
+		}
 		Class<? extends ValueAdapter<?>> valueAdapterType = valueAdapters.get(valueType);
 		try {
 			return (ValueAdapter<ValueType>) valueAdapterType.getConstructor(Map.class).newInstance(env);

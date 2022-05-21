@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.ValueAdapter;
+import jp.mintjams.tools.adapter.ValueAdapters;
 import jp.mintjams.tools.internal.io.InputStreamValueAdapter;
 import jp.mintjams.tools.internal.io.ReaderValueAdapter;
 import jp.mintjams.tools.internal.lang.BigDecimalValueAdapter;
@@ -85,6 +86,8 @@ public class DefaultParameterHandler implements ParameterHandler {
 		if (displayZoneIdString != null && !displayZoneIdString.trim().isEmpty()) {
 			env.put(ValueAdapter.ENV_DISPLAYZONEID, displayZoneIdString);
 		}
+
+		env.put(ValueAdapter.ENV_VALUEADAPTERS, ValueAdapters.createValueAdapterMap());
 
 		return env;
 	}
