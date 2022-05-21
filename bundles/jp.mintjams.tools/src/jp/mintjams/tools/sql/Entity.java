@@ -240,9 +240,20 @@ public class Entity {
 				.build();
 	}
 
+	public Update updateByPrimaryKey(Map<String, Object> values) throws SQLException {
+		return updateByPrimaryKey(values, values);
+	}
+
 	public Update updateByPrimaryKey(Map<String, Object> updates, Map<String, Object> conditions) throws SQLException {
 		Map<String, Object> variables = normalizeKey(updates);
 		Map<String, Object> cnds = normalizeKey(conditions);
+
+		for (ColumnInfo info : fPrimaryKeyList) {
+			String varName = info.getName().toLowerCase();
+			if (variables.containsKey(varName)) {
+				variables.remove(varName);
+			}
+		}
 
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ").append(fTableName);
