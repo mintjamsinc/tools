@@ -37,6 +37,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.temporal.Temporal;
+import java.util.Calendar;
 import java.util.Map;
 
 import jp.mintjams.tools.adapter.Adaptables;
@@ -74,6 +75,10 @@ public class StringValueAdapter extends AbstractValueAdapter<String> {
 				throw (IllegalArgumentException) new IllegalArgumentException(ex.getMessage()).initCause(ex);
 			}
 		} catch (UnadaptableValueException ignore) {}
+
+		if (value instanceof Calendar) {
+			return formatDateTime(((Calendar) value).getTime());
+		}
 
 		if (value instanceof java.util.Date) {
 			return formatDateTime((java.util.Date) value);
