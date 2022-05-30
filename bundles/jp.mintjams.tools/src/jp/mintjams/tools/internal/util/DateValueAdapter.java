@@ -23,6 +23,7 @@
 package jp.mintjams.tools.internal.util;
 
 import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -101,9 +102,11 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			return Dates.asDate(localTimeValue, getZoneId());
 		}
 
-		Number numberValue = Adaptables.getAdapter(value, Number.class);
-		if (numberValue != null) {
-			return Dates.asDate(numberValue.longValue());
+		BigDecimal bigDecimalValue = Adaptables.getAdapter(value, BigDecimal.class);
+		if (bigDecimalValue != null) {
+			if (bigDecimalValue.compareTo(BigDecimal.valueOf(Long.MIN_VALUE)) > 0 && bigDecimalValue.compareTo(BigDecimal.valueOf(Long.MAX_VALUE)) < 0) {
+				return Dates.asDate(bigDecimalValue.longValue());
+			}
 		}
 
 		try {

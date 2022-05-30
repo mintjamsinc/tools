@@ -70,6 +70,7 @@ public class ValueAdapters {
 
 	public static Map<Class<?>, Class<? extends ValueAdapter<?>>> createValueAdapterMap() {
 		Map<Class<?>, Class<? extends ValueAdapter<?>>> m = new HashMap<>();
+		m.put(Number.class, BigDecimalValueAdapter.class);
 		m.put(BigDecimal.class, BigDecimalValueAdapter.class);
 		m.put(BigInteger.class, BigIntegerValueAdapter.class);
 		m.put(Boolean.class, BooleanValueAdapter.class);
