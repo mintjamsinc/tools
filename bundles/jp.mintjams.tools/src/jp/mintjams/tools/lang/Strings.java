@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2021 MintJams Inc.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package jp.mintjams.tools.lang;
+
+public class Strings {
+
+	private Strings() {}
+
+	public static boolean isEmpty(String value) {
+		return (value == null || value.isEmpty());
+	}
+
+	public static boolean isBlank(String value) {
+		return (value == null || value.trim().isEmpty());
+	}
+
+	public static String trim(String value) {
+		if (value == null) {
+			return null;
+		}
+
+		return value.trim();
+	}
+
+	public static String trimToEmpty(String value) {
+		if (value == null) {
+			return "";
+		}
+
+		return value.trim();
+	}
+
+	public static String defaultString(String value) {
+		return defaultString(value, "");
+	}
+
+	public static String defaultString(String value, String defaultValue) {
+		if (value == null) {
+			return defaultValue;
+		}
+
+		return value;
+	}
+
+	public static String defaultIfEmpty(String value, String defaultValue) {
+		if (isEmpty(value)) {
+			return defaultValue;
+		}
+
+		return value;
+	}
+
+	public static String defaultIfBlank(String value, String defaultValue) {
+		if (isBlank(value)) {
+			return defaultValue;
+		}
+
+		return value;
+	}
+
+}
