@@ -24,18 +24,16 @@ package jp.mintjams.tools.io;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringWriter;
+import java.io.Writer;
 
 public class IOs {
 
 	private IOs() {}
 
 	public static void copy(InputStream in, OutputStream out) throws IOException {
-		byte[] buffer = new byte[8192];
-		for (;;) {
+		for (byte[] buffer = new byte[8192];;) {
 			int length = in.read(buffer);
 			if (length == -1) {
 				break;
@@ -44,23 +42,14 @@ public class IOs {
 		}
 	}
 
-	public static String toString(Reader in) throws IOException {
-		try (in) {
-			StringWriter out = new StringWriter();
-			char[] buffer = new char[8192];
-			for (;;) {
-				int length = in.read(buffer);
-				if (length == -1) {
-					break;
-				}
-				out.write(buffer, 0, length);
+	public static void copy(Reader in, Writer out) throws IOException {
+		for (char[] buffer = new char[8192];;) {
+			int length = in.read(buffer);
+			if (length == -1) {
+				break;
 			}
-			return out.toString();
+			out.write(buffer, 0, length);
 		}
-	}
-
-	public static String toString(InputStream in, String charsetName) throws IOException {
-		return toString(new InputStreamReader(in, charsetName));
 	}
 
 }

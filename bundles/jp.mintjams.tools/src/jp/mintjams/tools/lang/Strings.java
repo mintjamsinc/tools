@@ -22,6 +22,13 @@
 
 package jp.mintjams.tools.lang;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
+
 public class Strings {
 
 	private Strings() {}
@@ -76,6 +83,28 @@ public class Strings {
 		}
 
 		return value;
+	}
+
+	public static String readAll(InputStream stream, String charsetName) throws IOException {
+		return readAll(stream, Charset.forName(charsetName));
+	}
+
+	public static String readAll(InputStream stream, Charset charset) throws IOException {
+		return readAll(new InputStreamReader(stream, charset));
+	}
+
+	public static String readAll(Reader reader) throws IOException {
+		try (reader) {
+			StringWriter out = new StringWriter();
+			for (char[] buf = new char[8192];;) {
+				int length = reader.read(buf);
+				if (length == -1) {
+					break;
+				}
+				out.write(buf, 0, length);
+			}
+			return out.toString();
+		}
 	}
 
 }
