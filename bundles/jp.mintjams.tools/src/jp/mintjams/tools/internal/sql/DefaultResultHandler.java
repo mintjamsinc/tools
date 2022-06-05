@@ -22,8 +22,6 @@
 
 package jp.mintjams.tools.internal.sql;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -304,14 +302,13 @@ public class DefaultResultHandler implements ResultHandler {
 				}
 
 				if (o instanceof Array) {
-					context.registerCloseable(new Closeable() {
-						@Override
-						public void close() throws IOException {
-							try {
-								((Array) o).free();
-							} catch (Throwable ignore) {}
-						}
-					});
+					try {
+						return ((Array) o).getArray();
+					} finally {
+						try {
+							((Array) o).free();
+						} catch (Throwable ignore) {}
+					}
 				}
 
 				return o;
