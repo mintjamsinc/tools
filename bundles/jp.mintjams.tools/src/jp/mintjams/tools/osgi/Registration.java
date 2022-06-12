@@ -29,20 +29,38 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 
 public class Registration<ServiceType> implements Closeable {
 
 	private final ServiceRegistration<ServiceType> fServiceRegistration;
 	private final ServiceType fService;
+	private final ServiceFactory<ServiceType> fServiceFactory;
 
 	private Registration(ServiceRegistration<ServiceType> serviceRegistration, ServiceType service) {
 		fServiceRegistration = serviceRegistration;
 		fService = service;
+		fServiceFactory = null;
+	}
+
+	private Registration(ServiceRegistration<ServiceType> serviceRegistration, ServiceFactory<ServiceType> factory) {
+		fServiceRegistration = serviceRegistration;
+		fService = null;
+		fServiceFactory = factory;
+	}
+
+	public ServiceReference<ServiceType> getReference() {
+		return fServiceRegistration.getReference();
 	}
 
 	public ServiceType getService() {
 		return fService;
+	}
+
+	public ServiceFactory<ServiceType> getServiceFactory() {
+		return fServiceFactory;
 	}
 
 	@Override
@@ -60,6 +78,7 @@ public class Registration<ServiceType> implements Closeable {
 		private BundleContext fBundleContext;
 		private Class<ServiceType> fServiceType;
 		private ServiceType fService;
+		private ServiceFactory<ServiceType> fServiceFactory;
 		private Dictionary<String, Object> fProperties = new Hashtable<>();
 
 		private Builder(Class<ServiceType> serviceType) {
@@ -80,6 +99,11 @@ public class Registration<ServiceType> implements Closeable {
 			return this;
 		}
 
+		public Builder<ServiceType> setServiceFactory(ServiceFactory<ServiceType> factory) {
+			fServiceFactory = factory;
+			return this;
+		}
+
 		public Builder<ServiceType> setProperties(Dictionary<String, ?> properties) {
 			for (Enumeration<String> e = properties.keys(); e.hasMoreElements();) {
 				String k = e.nextElement();
@@ -94,7 +118,12 @@ public class Registration<ServiceType> implements Closeable {
 		}
 
 		public Registration<ServiceType> build() {
-			return new Registration<ServiceType>(fBundleContext.registerService(fServiceType, fService, fProperties), fService);
+			if (fService != null) {
+				return new Registration<ServiceType>(fBundleContext.registerService(fServiceType, fService, fProperties), fService);
+			} else if (fServiceFactory != null) {
+				return new Registration<ServiceType>(fBundleContext.registerService(fServiceType, fServiceFactory, fProperties), fServiceFactory);
+			}
+			throw new NullPointerException("Both the service and the service factory are null.");
 		}
 	}
 

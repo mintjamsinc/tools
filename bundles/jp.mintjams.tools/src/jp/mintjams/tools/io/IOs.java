@@ -27,6 +27,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class IOs {
 
@@ -49,6 +52,22 @@ public class IOs {
 				break;
 			}
 			out.write(buffer, 0, length);
+		}
+	}
+
+	public static void deleteDirectory(Path directoryPath) throws IOException {
+		try (Stream<Path> stream = Files.list(directoryPath)) {
+			stream.forEach(path -> {
+				try {
+					if (Files.isDirectory(path)) {
+						deleteDirectory(path);
+					}
+
+					Files.delete(path);
+				} catch (IOException ex) {
+					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+				}
+			});
 		}
 	}
 
