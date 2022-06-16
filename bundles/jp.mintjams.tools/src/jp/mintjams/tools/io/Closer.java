@@ -76,10 +76,23 @@ public class Closer extends Vector<Closeable> implements Closeable {
 
 	@Override
 	public synchronized void close() throws IOException {
+		close(true);
+	}
+
+	public synchronized void close(boolean silently) throws IOException {
 		while (!isEmpty()) {
 			try {
 				remove(size() - 1).close();
-			} catch (Throwable ignore) {}
+			} catch (Throwable ex) {
+				if (silently) {
+					continue;
+				}
+
+				if (ex instanceof IOException) {
+					throw ex;
+				}
+				throw (IOException) new IOException(ex.getMessage()).initCause(ex);
+			}
 		}
 	}
 
