@@ -24,6 +24,7 @@ package jp.mintjams.tools.osgi;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Dictionary;
@@ -96,8 +97,8 @@ public class Tracker<ServiceType> implements Closeable {
 		return fServices.values().iterator().next();
 	}
 
-	public Object[] getServices() {
-		return fServices.values().toArray();
+	public Collection<ServiceType> getServices() {
+		return Collections.unmodifiableCollection(fServices.values());
 	}
 
 	public Tracker<ServiceType> open() {
