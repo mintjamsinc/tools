@@ -79,14 +79,14 @@ public class SQLStatement implements Closeable, Adaptable {
 			variableString = variableString.substring(2, variableString.length() - 2);
 			String[] nameAndOptions = variableString.trim().split(";");
 			Object value = fVariableMap.get(nameAndOptions[0]);
-			boolean multiple = false;
+			boolean isList = false;
 			for (int i = 1; i < nameAndOptions.length; i++) {
-				if (nameAndOptions[i].equalsIgnoreCase("multiple")) {
-					multiple = true;
+				if (nameAndOptions[i].equalsIgnoreCase("list")) {
+					isList = true;
 					break;
 				}
 			}
-			if (multiple && value != null && (value instanceof Collection || value.getClass().isArray())) {
+			if (isList && value != null && (value instanceof Collection || value.getClass().isArray())) {
 				Object[] values;
 				if (value instanceof Collection) {
 					values = ((Collection<?>) value).toArray();
