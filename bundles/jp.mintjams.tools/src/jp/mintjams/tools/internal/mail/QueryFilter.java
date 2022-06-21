@@ -81,7 +81,7 @@ public class QueryFilter {
 			for (String f : filters) {
 				l.add(new QueryFilter().parse(f));
 			}
-			SearchTerm[] terms = l.toArray(new SearchTerm[l.size()]);
+			SearchTerm[] terms = l.toArray(SearchTerm[]::new);
 			if (filter.startsWith("(&")) {
 				return new AndTerm(terms);
 			}
@@ -96,7 +96,7 @@ public class QueryFilter {
 		String expr = filter.substring(1, filter.length() - 1);
 		int typeIndex = -1;
 		String type = null;
-		for (String s : FILTER_TYPES.keySet().toArray(new String[FILTER_TYPES.size()])) {
+		for (String s : FILTER_TYPES.keySet().toArray(String[]::new)) {
 			for (int fromIndex = 0;;) {
 				int i = expr.indexOf(s, fromIndex);
 				if (i == -1) {
@@ -212,7 +212,7 @@ public class QueryFilter {
 			filter.append(c0);
 			filterList = filterList.substring(1);
 		}
-		return l.toArray(new String[l.size()]);
+		return l.toArray(String[]::new);
 	}
 
 	private static class MessageNumberFilterTerm extends IntegerComparisonTerm {

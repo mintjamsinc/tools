@@ -185,25 +185,25 @@ public class Properties implements Adaptable {
 
 		if (propValue.getClass().isArray()) {
 			Object[] valueArray = (Object[]) propValue;
-			List<String> values = new ArrayList<String>(valueArray.length);
+			List<String> values = new ArrayList<>(valueArray.length);
 			for (Object value : valueArray) {
 				if (value != null) {
 					values.add(value.toString());
 				}
 			}
-			return values.toArray(new String[values.size()]);
+			return values.toArray(String[]::new);
 
 		}
 
 		if (propValue instanceof Collection<?>) {
 			Collection<?> valueCollection = (Collection<?>) propValue;
-			List<String> valueList = new ArrayList<String>(valueCollection.size());
+			List<String> valueList = new ArrayList<>(valueCollection.size());
 			for (Object value : valueCollection) {
 				if (value != null) {
 					valueList.add(value.toString());
 				}
 			}
-			return valueList.toArray(new String[valueList.size()]);
+			return valueList.toArray(String[]::new);
 		}
 
 		return defaultArray;

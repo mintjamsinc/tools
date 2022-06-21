@@ -342,7 +342,7 @@ public class Message implements Closeable {
 				l.add(new MailDateFormat().parse(getMimeHeaders().getDecoded("Date")[0]));
 			} catch (ParseException ignore) {}
 		}
-		return l.toArray(new java.util.Date[l.size()]);
+		return l.toArray(java.util.Date[]::new);
 	}
 
 	private InternetAddress[] toInternetAddress(Address... address) throws MessagingException {
@@ -350,7 +350,7 @@ public class Message implements Closeable {
 		for (Address e : address) {
 			l.add(InternetAddress.class.cast(e));
 		}
-		return l.toArray(new InternetAddress[l.size()]);
+		return l.toArray(InternetAddress[]::new);
 	}
 
 	private String getEncoded(Address... address) throws MessagingException {
@@ -569,7 +569,7 @@ public class Message implements Closeable {
 				}
 			}
 		}
-		return l.toArray(new String[l.size()]);
+		return l.toArray(String[]::new);
 	}
 
 	public String getPriority() throws MessagingException {
@@ -704,7 +704,7 @@ public class Message implements Closeable {
 
 			l.add(new AttachmentImpl(p));
 		}
-		return l.toArray(new Attachment[l.size()]);
+		return l.toArray(Attachment[]::new);
 	}
 
 	public boolean hasContent(String mimeType) throws MessagingException {
@@ -1011,7 +1011,7 @@ public class Message implements Closeable {
 			if (values == null) {
 				return null;
 			}
-			return values.toArray(new String[values.size()]);
+			return values.toArray(String[]::new);
 		}
 
 		public String[] getDecoded(String name) throws MessagingException {
@@ -1024,7 +1024,7 @@ public class Message implements Closeable {
 			for (String e : values) {
 				l.add(decodeText(e).trim());
 			}
-			return l.toArray(new String[l.size()]);
+			return l.toArray(String[]::new);
 		}
 
 		public void setEncoded(String name, String value) throws MessagingException {
