@@ -54,18 +54,8 @@ public class Closer extends Vector<Closeable> implements Closeable {
 		});
 	}
 
-	public synchronized <C extends Closeable> C register(C e) {
-		add(e);
-		return e;
-	}
-
 	public synchronized <C extends AutoCloseable> C register(C e) {
 		add(e);
-		return e;
-	}
-
-	public synchronized <C extends Closeable> C unregister(C e) {
-		remove(e);
 		return e;
 	}
 
@@ -79,12 +69,12 @@ public class Closer extends Vector<Closeable> implements Closeable {
 		close(true);
 	}
 
-	public synchronized void close(boolean silently) throws IOException {
+	public synchronized void close(boolean quietly) throws IOException {
 		while (!isEmpty()) {
 			try {
 				remove(size() - 1).close();
 			} catch (Throwable ex) {
-				if (silently) {
+				if (quietly) {
 					continue;
 				}
 

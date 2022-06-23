@@ -55,20 +55,35 @@ public class IOs {
 		}
 	}
 
-	public static void deleteDirectory(Path directoryPath) throws IOException {
-		try (Stream<Path> stream = Files.list(directoryPath)) {
-			stream.forEach(path -> {
+	public static void deleteIfExists(Path path) throws IOException {
+		if (!Files.exists(path)) {
+			return;
+		}
+
+		if (!Files.isDirectory(path)) {
+			Files.deleteIfExists(path);
+			return;
+		}
+
+		try (Stream<Path> stream = Files.list(path)) {
+			stream.forEach(childPath -> {
 				try {
-					if (Files.isDirectory(path)) {
-						deleteDirectory(path);
+					if (Files.isDirectory(childPath)) {
+						deleteIfExists(childPath);
 					}
 
-					Files.delete(path);
+					Files.delete(childPath);
 				} catch (IOException ex) {
 					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 				}
 			});
 		}
+	}
+
+	public static void closeQuietly(AutoCloseable closeable) {
+		try {
+			closeable.close();
+		} catch (Throwable ignore) {}
 	}
 
 }
