@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,7 +75,7 @@ public class IOs {
 
 					Files.delete(childPath);
 				} catch (IOException ex) {
-					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+					throw new UncheckedIOException(ex);
 				}
 			});
 		}
