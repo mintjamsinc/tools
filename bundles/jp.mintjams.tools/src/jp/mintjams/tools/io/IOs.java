@@ -46,6 +46,37 @@ public class IOs {
 		}
 	}
 
+	public static void copy(InputStream in, OutputStream out, long offset, long length) throws IOException {
+		if (offset < 0) {
+			throw new IllegalArgumentException("Invalid offset: " + offset);
+		}
+		if (length < 0) {
+			throw new IllegalArgumentException("Invalid length: " + length);
+		}
+
+		if (length == 0) {
+			return;
+		}
+
+		if (offset > 0) {
+			in.skip(offset);
+		}
+
+		for (byte[] buffer = new byte[8192]; length > 0;) {
+			int readLength;
+			if (length >= buffer.length) {
+				readLength = in.read(buffer);
+			} else {
+				readLength = in.read(buffer, 0, Math.toIntExact(length));
+			}
+			if (readLength == -1) {
+				break;
+			}
+			out.write(buffer, 0, readLength);
+			length -= readLength;
+		}
+	}
+
 	public static void copy(Reader in, Writer out) throws IOException {
 		for (char[] buffer = new char[8192];;) {
 			int length = in.read(buffer);
