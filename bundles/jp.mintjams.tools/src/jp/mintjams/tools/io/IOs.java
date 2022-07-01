@@ -22,6 +22,7 @@
 
 package jp.mintjams.tools.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -84,6 +85,14 @@ public class IOs {
 				break;
 			}
 			out.write(buffer, 0, length);
+		}
+	}
+
+	public static byte[] toByteArray(InputStream in) throws IOException {
+		try (in) {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			copy(in, out);
+			return out.toByteArray();
 		}
 	}
 
