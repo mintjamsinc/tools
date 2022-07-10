@@ -46,6 +46,7 @@ public class Query {
 	private final String fStatement;
 	private final Map<String, Object> fVariables = new HashMap<>();
 	private final Connection fConnection;
+	private final boolean fCloseConnection;
 	private final ParameterHandler fParameterHandler;
 	private ResultHandler fResultHandler;
 	private Integer fOffset;
@@ -58,6 +59,7 @@ public class Query {
 		fStatement = builder.fStatement;
 		fVariables.putAll(builder.fVariables);
 		fConnection = builder.fConnection;
+		fCloseConnection = builder.fCloseConnection;
 		fParameterHandler = builder.fParameterHandler;
 		fResultHandler = builder.fResultHandler;
 	}
@@ -173,6 +175,12 @@ public class Query {
 			return this;
 		}
 
+		private boolean fCloseConnection;
+		public Builder setCloseConnection(boolean closeConnection) {
+			fCloseConnection = closeConnection;
+			return this;
+		}
+
 		private ParameterHandler fParameterHandler;
 		public Builder setParameterHandler(ParameterHandler parameterHandler) {
 			fParameterHandler = parameterHandler;
@@ -246,6 +254,9 @@ public class Query {
 		};
 
 		private ResultImpl(ResultSet rs, SQLStatement stmt) throws SQLException {
+			if (fCloseConnection) {
+				fCloser.register(fConnection);
+			}
 			fCloser.register(stmt);
 			fResultSet = fCloser.register(rs);
 			fMetadata = fResultSet.getMetaData();
