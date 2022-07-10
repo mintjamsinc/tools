@@ -124,6 +124,11 @@ public class Query {
 			try {
 				stmt.close();
 			} catch (Throwable ignore) {}
+			if (fCloseConnection) {
+				try {
+					fConnection.close();
+				} catch (Throwable ignore) {}
+			}
 
 			if (ex instanceof SQLException) {
 				throw ex;
