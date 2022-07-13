@@ -56,6 +56,7 @@ import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.Session;
+import javax.mail.internet.AddressException;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MailDateFormat;
@@ -452,7 +453,12 @@ public class Message implements Closeable {
 		if (values == null) {
 			return new InternetAddress[0];
 		}
-		InternetAddress[] a = InternetAddress.parse(values[0]);
+		InternetAddress[] a;
+		try {
+			a = InternetAddress.parse(values[0]);
+		} catch (AddressException ignore) {
+			return new InternetAddress[0];
+		}
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
@@ -467,7 +473,12 @@ public class Message implements Closeable {
 		if (values == null) {
 			return new InternetAddress[0];
 		}
-		InternetAddress[] a = InternetAddress.parse(values[0]);
+		InternetAddress[] a;
+		try {
+			a = InternetAddress.parse(values[0]);
+		} catch (AddressException ignore) {
+			return new InternetAddress[0];
+		}
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
@@ -482,7 +493,12 @@ public class Message implements Closeable {
 		if (values == null) {
 			return new InternetAddress[0];
 		}
-		InternetAddress[] a = InternetAddress.parse(values[0]);
+		InternetAddress[] a;
+		try {
+			a = InternetAddress.parse(values[0]);
+		} catch (AddressException ignore) {
+			return new InternetAddress[0];
+		}
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
@@ -497,7 +513,12 @@ public class Message implements Closeable {
 		if (values == null) {
 			return new InternetAddress[0];
 		}
-		InternetAddress[] a = InternetAddress.parse(values[0]);
+		InternetAddress[] a;
+		try {
+			a = InternetAddress.parse(values[0]);
+		} catch (AddressException ignore) {
+			return new InternetAddress[0];
+		}
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
@@ -512,7 +533,12 @@ public class Message implements Closeable {
 		if (values == null) {
 			return new InternetAddress[0];
 		}
-		InternetAddress[] a = InternetAddress.parse(values[0]);
+		InternetAddress[] a;
+		try {
+			a = InternetAddress.parse(values[0]);
+		} catch (AddressException ignore) {
+			return new InternetAddress[0];
+		}
 		return (a != null) ? fixPersonal(a) : new InternetAddress[0];
 	}
 
@@ -1083,7 +1109,11 @@ public class Message implements Closeable {
 							|| e.getKey().equalsIgnoreCase("Cc")
 							|| e.getKey().equalsIgnoreCase("Bcc")
 							|| e.getKey().equalsIgnoreCase("Reply-To")) {
-						line.append(getEncoded(fixPersonal(InternetAddress.parse(value))));
+						try {
+							line.append(getEncoded(fixPersonal(InternetAddress.parse(value))));
+						} catch (AddressException ignore) {
+							line.append(value);
+						}
 					} else {
 						line.append(MimeUtility.encodeText(decodeText(value)));
 					}
