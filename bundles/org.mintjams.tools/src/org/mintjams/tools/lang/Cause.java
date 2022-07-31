@@ -64,7 +64,12 @@ public class Cause {
 
 		try {
 			if (message == null) {
-				return (ThrowType) throwType.getConstructor().newInstance().initCause(fThrowable);
+				if (fThrowable instanceof Exception) {
+					try {
+						return (ThrowType) throwType.getConstructor(Exception.class).newInstance(fThrowable);
+					} catch (NoSuchMethodException ignore) {}
+				}
+				message = fThrowable.getMessage();
 			}
 
 			return (ThrowType) throwType.getConstructor(String.class).newInstance(message).initCause(fThrowable);
