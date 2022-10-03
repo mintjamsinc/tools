@@ -50,10 +50,9 @@ Executing an SQL select statement
 
 ```java
 Query query = Query
-    .newBuilder()
+    .newBuilder(connection)
     .setStatement("SELECT * FROM items WHERE price >= {{minPrice}}")
     .setVariable("minPrice", 200)
-    .setConnection(connection)
     .build();
 
 try (Result result = query.setOffset(0).setLimit(1000).execute()) {
@@ -74,11 +73,10 @@ Executing an SQL update statement
 
 ```java
 int updated = Update
-    .newBuilder()
+    .newBuilder(connection)
     .setStatement("UPDATE items SET price = {{newPrice}} WHERE id = {{id}}")
     .setVariable("id", "101")
     .setVariable("newPrice", 100)
-    .setConnection(connection)
     .build()
     .execute();
 ```
@@ -87,9 +85,8 @@ Using schema auto-detection
 
 ```java
 Entity entity = Entity
-    .newBuilder()
+    .newBuilder(connection)
     .setName("items")
-    .setConnection(connection)
     .build();
 
 AdaptableMap<String, Object> pk = AdaptableMap
