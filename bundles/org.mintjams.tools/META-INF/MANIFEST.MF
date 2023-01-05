@@ -3,7 +3,7 @@ Automatic-Module-Name: org.mintjams.tools
 Bundle-ManifestVersion: 2
 Bundle-Name: %Plugin.name
 Bundle-SymbolicName: org.mintjams.tools
-Bundle-Version: 2.0.0
+Bundle-Version: 2.0.1
 Bundle-Vendor: %Plugin.provider
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Export-Package: org.mintjams.tools.adapter;version="2.0.0",
