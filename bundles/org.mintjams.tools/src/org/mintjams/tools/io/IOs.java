@@ -23,14 +23,15 @@
 package org.mintjams.tools.io;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.stream.Stream;
 
 public class IOs {
@@ -102,22 +103,12 @@ public class IOs {
 		}
 
 		if (!Files.isDirectory(path)) {
-			Files.deleteIfExists(path);
+			Files.delete(path);
 			return;
 		}
 
-		try (Stream<Path> stream = Files.list(path)) {
-			stream.forEach(childPath -> {
-				try {
-					if (Files.isDirectory(childPath)) {
-						deleteIfExists(childPath);
-					}
-
-					Files.delete(childPath);
-				} catch (IOException ex) {
-					throw new UncheckedIOException(ex);
-				}
-			});
+		try (Stream<Path> stream = Files.walk(path)) {
+			stream.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
 		}
 	}
 
