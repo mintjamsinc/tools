@@ -549,7 +549,11 @@ public class Message implements Closeable {
 	}
 
 	public String getSubject() throws MessagingException {
-		return getMimeHeaders().getDecoded("Subject")[0];
+		String[] values = getMimeHeaders().getDecoded("Subject");
+		if (values == null || values.length == 0) {
+			return null;
+		}
+		return values[0];
 	}
 
 	public Message setSubject(String value) throws MessagingException {
