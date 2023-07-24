@@ -29,6 +29,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class CharacterValueAdapter extends AbstractValueAdapter<Character> {
 
@@ -44,6 +45,11 @@ public class CharacterValueAdapter extends AbstractValueAdapter<Character> {
 	public Character adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		Character characterValue = Adaptables.getAdapter(value, Character.class);

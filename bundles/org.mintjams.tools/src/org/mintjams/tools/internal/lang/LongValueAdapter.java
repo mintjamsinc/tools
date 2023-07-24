@@ -37,6 +37,7 @@ import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
 import org.mintjams.tools.internal.util.Dates;
+import org.mintjams.tools.lang.Strings;
 
 public class LongValueAdapter extends AbstractValueAdapter<Long> {
 
@@ -52,6 +53,11 @@ public class LongValueAdapter extends AbstractValueAdapter<Long> {
 	public Long adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		Long longValue = Adaptables.getAdapter(value, Long.class);

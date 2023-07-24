@@ -33,6 +33,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class FileValueAdapter extends AbstractValueAdapter<File> {
 
@@ -48,6 +49,11 @@ public class FileValueAdapter extends AbstractValueAdapter<File> {
 	public File adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		File fileValue = Adaptables.getAdapter(value, File.class);

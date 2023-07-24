@@ -33,6 +33,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class URIValueAdapter extends AbstractValueAdapter<URI> {
 
@@ -48,6 +49,11 @@ public class URIValueAdapter extends AbstractValueAdapter<URI> {
 	public URI adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		URI uriValue = Adaptables.getAdapter(value, URI.class);

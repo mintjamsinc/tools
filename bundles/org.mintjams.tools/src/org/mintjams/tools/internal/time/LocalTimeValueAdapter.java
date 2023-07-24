@@ -31,6 +31,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class LocalTimeValueAdapter extends AbstractValueAdapter<LocalTime> {
 
@@ -46,6 +47,11 @@ public class LocalTimeValueAdapter extends AbstractValueAdapter<LocalTime> {
 	public LocalTime adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		LocalTime localTimeValue = Adaptables.getAdapter(value, LocalTime.class);

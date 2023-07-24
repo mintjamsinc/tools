@@ -33,6 +33,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class URLValueAdapter extends AbstractValueAdapter<URL> {
 
@@ -48,6 +49,11 @@ public class URLValueAdapter extends AbstractValueAdapter<URL> {
 	public URL adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		URL urlValue = Adaptables.getAdapter(value, URL.class);

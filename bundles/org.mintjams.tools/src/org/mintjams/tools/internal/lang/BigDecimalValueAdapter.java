@@ -37,6 +37,7 @@ import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
 import org.mintjams.tools.internal.util.Dates;
+import org.mintjams.tools.lang.Strings;
 
 public class BigDecimalValueAdapter extends AbstractValueAdapter<BigDecimal> {
 
@@ -52,6 +53,11 @@ public class BigDecimalValueAdapter extends AbstractValueAdapter<BigDecimal> {
 	public BigDecimal adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		BigDecimal bigDecimalValue = Adaptables.getAdapter(value, BigDecimal.class);

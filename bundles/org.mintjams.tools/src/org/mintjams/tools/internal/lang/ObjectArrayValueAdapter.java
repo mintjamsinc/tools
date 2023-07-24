@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
+import org.mintjams.tools.lang.Strings;
 
 public class ObjectArrayValueAdapter extends AbstractValueAdapter<Object[]> {
 
@@ -44,6 +45,11 @@ public class ObjectArrayValueAdapter extends AbstractValueAdapter<Object[]> {
 	public Object[] adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		if (value.getClass().isArray()) {

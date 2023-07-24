@@ -30,6 +30,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class IntegerValueAdapter extends AbstractValueAdapter<Integer> {
 
@@ -45,6 +46,11 @@ public class IntegerValueAdapter extends AbstractValueAdapter<Integer> {
 	public Integer adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		Integer integerValue = Adaptables.getAdapter(value, Integer.class);

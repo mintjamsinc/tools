@@ -30,6 +30,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class OffsetTimeValueAdapter extends AbstractValueAdapter<OffsetTime> {
 
@@ -45,6 +46,11 @@ public class OffsetTimeValueAdapter extends AbstractValueAdapter<OffsetTime> {
 	public OffsetTime adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		OffsetTime offsetTimeValue = Adaptables.getAdapter(value, OffsetTime.class);

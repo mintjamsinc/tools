@@ -29,6 +29,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class CalendarValueAdapter extends AbstractValueAdapter<java.util.Calendar> {
 
@@ -44,6 +45,11 @@ public class CalendarValueAdapter extends AbstractValueAdapter<java.util.Calenda
 	public java.util.Calendar adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		java.util.Calendar calendarValue = Adaptables.getAdapter(value, java.util.Calendar.class);

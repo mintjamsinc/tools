@@ -30,6 +30,7 @@ import org.mintjams.tools.adapter.AbstractValueAdapter;
 import org.mintjams.tools.adapter.Adaptables;
 import org.mintjams.tools.adapter.UnadaptableValueException;
 import org.mintjams.tools.adapter.ValueAdapters;
+import org.mintjams.tools.lang.Strings;
 
 public class TimeValueAdapter extends AbstractValueAdapter<java.sql.Time> {
 
@@ -45,6 +46,11 @@ public class TimeValueAdapter extends AbstractValueAdapter<java.sql.Time> {
 	public java.sql.Time adapt(Object value) {
 		if (value == null) {
 			return null;
+		}
+		if (value instanceof String) {
+			if (Strings.isBlank((String) value)) {
+				return null;
+			}
 		}
 
 		Time timeValue = Adaptables.getAdapter(value, Time.class);
