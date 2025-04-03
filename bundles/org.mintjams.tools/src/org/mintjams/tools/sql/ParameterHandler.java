@@ -32,6 +32,8 @@ public interface ParameterHandler {
 
 	void setParameter(ParameterContext context) throws SQLException;
 
+	Object getParameter(ParameterContext context) throws SQLException;
+
 	interface ParameterContext {
 		PreparedStatement getStatement();
 
@@ -46,6 +48,8 @@ public interface ParameterHandler {
 		int getType();
 
 		Map<String, String> getOptions();
+
+		int getParameterMode();
 
 		<C extends Closeable> C registerCloseable(C closeable);
 	}

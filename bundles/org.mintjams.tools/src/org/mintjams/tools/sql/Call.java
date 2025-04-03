@@ -24,11 +24,12 @@ package org.mintjams.tools.sql;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,9 +40,10 @@ import org.mintjams.tools.collections.AdaptableMap;
 import org.mintjams.tools.internal.sql.DefaultResultHandler;
 import org.mintjams.tools.internal.sql.SQLStatement;
 import org.mintjams.tools.io.Closer;
+import org.mintjams.tools.sql.ParameterHandler.ParameterContext;
 import org.mintjams.tools.sql.ResultHandler.ResultContext;
 
-public class Query {
+public class Call {
 
 	private final String fStatement;
 	private final Map<String, Object> fVariables = new HashMap<>();
@@ -55,7 +57,7 @@ public class Query {
 	private Integer fFetchDirection;
 	private Integer fFetchSize;
 
-	private Query(Builder builder) {
+	private Call(Builder builder) {
 		fStatement = builder.fStatement;
 		fVariables.putAll(builder.fVariables);
 		fConnection = builder.fConnection;
@@ -68,46 +70,47 @@ public class Query {
 		return SQLStatement.newBuilder()
 				.setSource(fStatement)
 				.setVariables(fVariables)
+				.setCallable(true)
 				.setConnection(fConnection)
 				.setParameterHandler(fParameterHandler)
 				.build();
 	}
 
-	public Query setOffset(int offset) throws SQLException {
+	public Call setOffset(int offset) throws SQLException {
 		fOffset = offset;
 		return this;
 	}
 
-	public Query setLimit(int limit) throws SQLException {
+	public Call setLimit(int limit) throws SQLException {
 		fLimit = limit;
 		return this;
 	}
 
-	public Query setCursorName(String name) throws SQLException {
+	public Call setCursorName(String name) throws SQLException {
 		fCursorName = name;
 		return this;
 	}
 
-	public Query setFetchDirection(int direction) throws SQLException {
+	public Call setFetchDirection(int direction) throws SQLException {
 		fFetchDirection = direction;
 		return this;
 	}
 
-	public Query setFetchSize(int rows) throws SQLException {
+	public Call setFetchSize(int rows) throws SQLException {
 		fFetchSize = rows;
 		return this;
 	}
 
 	public Result execute() throws SQLException {
 		SQLStatement stmt = null;
-		ResultSet rs = null;
+		boolean isResultSet;
 		try {
 			stmt = prepare();
 
 			PreparedStatement p = stmt.prepare(
-					ResultSet.TYPE_FORWARD_ONLY,
-					ResultSet.CONCUR_READ_ONLY,
-					ResultSet.HOLD_CURSORS_OVER_COMMIT);
+					java.sql.ResultSet.TYPE_FORWARD_ONLY,
+					java.sql.ResultSet.CONCUR_READ_ONLY,
+					java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT);
 			if (fCursorName != null) {
 				p.setCursorName(fCursorName);
 			}
@@ -116,11 +119,8 @@ public class Query {
 			}
 			p.setFetchSize((fFetchSize != null) ? fFetchSize : 1000);
 
-			rs = p.executeQuery();
+			isResultSet = p.execute();
 		} catch (Throwable ex) {
-			try {
-				rs.close();
-			} catch (Throwable ignore) {}
 			try {
 				stmt.close();
 			} catch (Throwable ignore) {}
@@ -135,7 +135,7 @@ public class Query {
 			}
 			throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 		}
-		return new ResultImpl(rs, stmt);
+		return new ResultImpl(isResultSet, stmt);
 	}
 
 	public static Builder newBuilder(Connection connection) {
@@ -198,21 +198,121 @@ public class Query {
 			return this;
 		}
 
-		public Query build() throws SQLException {
+		public Call build() throws SQLException {
 			Objects.requireNonNull(fStatement);
 			Objects.requireNonNull(fConnection);
-			return new Query(this);
+			return new Call(this);
 		}
 	}
 
-	public interface Result extends Iterable<AdaptableMap<String, Object>>, Closeable {
+	public interface Result extends Iterable<ResultSet>, Closeable {
+		AdaptableMap<String, Object> getOutParameters();
+	}
+
+	public interface ResultSet extends Iterable<AdaptableMap<String, Object>>, Closeable {
 		int getRow();
 
 		void skip(int skipNum);
 	}
 
 	private class ResultImpl implements Result {
-		private final ResultSet fResultSet;
+		private final SQLStatement fSQLStatement;
+		private boolean fIsResultSet;
+		private boolean fNoMoreResults;
+		private final Closer fCloser = Closer.create();
+
+		private Iterator<ResultSet> fIterator = new Iterator<ResultSet>() {
+			@Override
+			public boolean hasNext() {
+				return !fNoMoreResults;
+			}
+
+			@Override
+			public ResultSet next() {
+				if (fNoMoreResults) {
+					throw new NoSuchElementException("No more query results available.");
+				}
+
+				try {
+					return fCloser.register(
+							new ResultSetImpl(fSQLStatement.adaptTo(Statement.class).getResultSet(), new Closeable() {
+								@Override
+								public void close() throws IOException {
+									try {
+										nextResult(false);
+									} catch (SQLException ex) {
+										throw (IOException) new IOException(ex.getMessage()).initCause(ex);
+									}
+								}
+							}));
+				} catch (SQLException ex) {
+					throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+				}
+			}
+		};
+
+		private ResultImpl(boolean isResultSet, SQLStatement stmt) throws SQLException {
+			if (fCloseConnection) {
+				fCloser.register(fConnection);
+			}
+			fSQLStatement = fCloser.register(stmt);
+			fIsResultSet = isResultSet;
+			nextResult(true);
+		}
+
+		private void nextResult(boolean skipMoreResults) throws SQLException {
+			while (!fNoMoreResults) {
+				if (!skipMoreResults) {
+					fIsResultSet = fSQLStatement.adaptTo(Statement.class).getMoreResults();
+				}
+
+				if (fIsResultSet) {
+					break;
+				} else {
+					if (fSQLStatement.adaptTo(CallableStatement.class).getUpdateCount() == -1) {
+						fNoMoreResults = true;
+						break;
+					}
+				}
+
+				skipMoreResults = false;
+			}
+		}
+
+		private Map<String, Object> fOutParameters;
+		@Override
+		public AdaptableMap<String, Object> getOutParameters() {
+			if (fOutParameters == null) {
+				fOutParameters = new HashMap<>();
+				ParameterHandler handler = fSQLStatement.adaptTo(ParameterHandler.class);
+				for (ParameterContext context : fSQLStatement.listOutParameters()) {
+					try {
+						Object value = handler.getParameter(context);
+						if (value instanceof java.sql.ResultSet) {
+							value = fCloser.register(new ResultSetImpl((java.sql.ResultSet) value));
+						}
+						fOutParameters.put(context.getName(), value);
+					} catch (SQLException ex) {
+						throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
+					}
+				}
+			}
+			return AdaptableMap.<String, Object>newBuilder(String.CASE_INSENSITIVE_ORDER).putAll(fOutParameters).build();
+		}
+
+		@Override
+		public Iterator<ResultSet> iterator() {
+			return fIterator;
+		}
+
+		@Override
+		public void close() throws IOException {
+			fCloser.close();
+		}
+	}
+
+	private class ResultSetImpl implements ResultSet {
+		private final java.sql.ResultSet fResultSet;
 		private final ResultSetMetaData fMetadata;
 		private final Closer fCloser = Closer.create();
 		private boolean fHasNext;
@@ -220,7 +320,7 @@ public class Query {
 
 		private ResultContext fResultContext = new ResultContext() {
 			@Override
-			public ResultSet getResultSet() {
+			public java.sql.ResultSet getResultSet() {
 				return fResultSet;
 			}
 
@@ -275,11 +375,14 @@ public class Query {
 			}
 		};
 
-		private ResultImpl(ResultSet rs, SQLStatement stmt) throws SQLException {
-			if (fCloseConnection) {
-				fCloser.register(fConnection);
+		private ResultSetImpl(java.sql.ResultSet rs) throws SQLException {
+			this(rs, null);
+		}
+
+		private ResultSetImpl(java.sql.ResultSet rs, Closeable next) throws SQLException {
+			if (next != null) {
+				fCloser.register(next);
 			}
-			fCloser.register(stmt);
 			fResultSet = fCloser.register(rs);
 			fMetadata = fResultSet.getMetaData();
 

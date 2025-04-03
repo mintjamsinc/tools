@@ -25,6 +25,10 @@ package org.mintjams.tools.internal.sql;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -57,7 +61,23 @@ public class DefaultParameterHandler implements ParameterHandler {
 			return;
 		}
 
-		getHandler(context.getType()).setParameter(context);
+		getHandler(getType(context)).setParameter(context);
+	}
+
+	@Override
+	public Object getParameter(ParameterContext context) throws SQLException {
+		return getHandler(getType(context)).getParameter(context);
+	}
+
+	private int getType(ParameterContext context) throws SQLException {
+		int type = context.getType();
+		if (type == Types.OTHER) {
+			String typeName = context.getParameterMetaData().getParameterTypeName(context.getIndex()).toUpperCase();
+			if (typeName.startsWith("TIMESTAMP")) {
+				type = Types.TIMESTAMP;
+			}
+		}
+		return type;
 	}
 
 	private Handler getHandler(int type) {
@@ -98,6 +118,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.BOOLEAN.setParameter(context);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.BOOLEAN.getParameter(context);
+			}
 		},
 		TINYINT(Types.TINYINT) {
 			@Override
@@ -108,6 +133,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 					return;
 				}
 				context.getStatement().setByte(context.getIndex(), value);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getByte(context.getIndex());
 			}
 		},
 		SMALLINT(Types.SMALLINT) {
@@ -120,6 +150,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setShort(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getShort(context.getIndex());
+			}
 		},
 		INTEGER(Types.INTEGER) {
 			@Override
@@ -130,6 +165,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 					return;
 				}
 				context.getStatement().setInt(context.getIndex(), value);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getInt(context.getIndex());
 			}
 		},
 		BIGINT(Types.BIGINT) {
@@ -142,6 +182,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setLong(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getLong(context.getIndex());
+			}
 		},
 		FLOAT(Types.FLOAT) {
 			@Override
@@ -153,11 +198,21 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setFloat(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getFloat(context.getIndex());
+			}
 		},
 		REAL(Types.REAL) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.FLOAT.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.FLOAT.getParameter(context);
 			}
 		},
 		DOUBLE(Types.DOUBLE) {
@@ -170,11 +225,21 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setDouble(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getDouble(context.getIndex());
+			}
 		},
 		NUMERIC(Types.NUMERIC) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.DECIMAL.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.DECIMAL.getParameter(context);
 			}
 		},
 		DECIMAL(Types.DECIMAL) {
@@ -187,6 +252,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setBigDecimal(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getBigDecimal(context.getIndex());
+			}
 		},
 		CHAR(Types.CHAR) {
 			@Override
@@ -198,11 +268,21 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setString(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getString(context.getIndex());
+			}
 		},
 		VARCHAR(Types.VARCHAR) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.CHAR.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.CHAR.getParameter(context);
 			}
 		},
 		LONGVARCHAR(Types.LONGVARCHAR) {
@@ -216,6 +296,15 @@ public class DefaultParameterHandler implements ParameterHandler {
 				context.registerCloseable(value);
 				context.getStatement().setCharacterStream(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				Reader value = ((CallableStatement) context.getStatement()).getCharacterStream(context.getIndex());
+				if (value != null) {
+					context.registerCloseable(value);
+				}
+				return value;
+			}
 		},
 		DATE(Types.DATE) {
 			@Override
@@ -226,6 +315,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 					return;
 				}
 				context.getStatement().setDate(context.getIndex(), value);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getDate(context.getIndex());
 			}
 		},
 		TIME(Types.TIME) {
@@ -238,6 +332,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setTime(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getTime(context.getIndex());
+			}
 		},
 		TIMESTAMP(Types.TIMESTAMP) {
 			@Override
@@ -248,6 +347,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 					return;
 				}
 				context.getStatement().setTimestamp(context.getIndex(), value);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getTimestamp(context.getIndex());
 			}
 		},
 		BINARY(Types.BINARY) {
@@ -261,11 +365,21 @@ public class DefaultParameterHandler implements ParameterHandler {
 				context.registerCloseable(value);
 				context.getStatement().setBinaryStream(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getBytes(context.getIndex());
+			}
 		},
 		VARBINARY(Types.VARBINARY) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.BINARY.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.BINARY.getParameter(context);
 			}
 		},
 		LONGVARBINARY(Types.LONGVARBINARY) {
@@ -273,17 +387,32 @@ public class DefaultParameterHandler implements ParameterHandler {
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.BINARY.setParameter(context);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.BINARY.getParameter(context);
+			}
 		},
 		NULL(Types.NULL) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				context.getStatement().setNull(context.getIndex(), context.getType());
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return null;
+			}
 		},
 		OTHER(Types.OTHER) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.JAVA_OBJECT.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.JAVA_OBJECT.getParameter(context);
 			}
 		},
 		JAVA_OBJECT(Types.JAVA_OBJECT) {
@@ -296,16 +425,31 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setObject(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getObject(context.getIndex());
+			}
 		},
 		DISTINCT(Types.DISTINCT) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				throw new UnsupportedOperationException("Not yet implemented.");
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				throw new UnsupportedOperationException("Not yet implemented.");
+			}
 		},
 		STRUCT(Types.STRUCT) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
+				throw new UnsupportedOperationException("Not yet implemented.");
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
 				throw new UnsupportedOperationException("Not yet implemented.");
 			}
 		},
@@ -323,11 +467,37 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setArray(context.getIndex(), context.getStatement().getConnection().createArrayOf(typeName, value));
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				Object o = ((CallableStatement) context.getStatement()).getObject(context.getIndex());
+
+				if (o instanceof Array) {
+					try {
+						return ((Array) o).getArray();
+					} finally {
+						try {
+							((Array) o).free();
+						} catch (Throwable ignore) {}
+					}
+				}
+
+				return o;
+			}
 		},
 		BLOB(Types.BLOB) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.BINARY.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				Blob value = ((CallableStatement) context.getStatement()).getBlob(context.getIndex());
+				if (value == null) {
+					return null;
+				}
+				return context.registerCloseable(value.getBinaryStream());
 			}
 		},
 		CLOB(Types.CLOB) {
@@ -335,16 +505,35 @@ public class DefaultParameterHandler implements ParameterHandler {
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.LONGVARCHAR.setParameter(context);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				Clob value = ((CallableStatement) context.getStatement()).getClob(context.getIndex());
+				if (value == null) {
+					return null;
+				}
+				return context.registerCloseable(value.getCharacterStream());
+			}
 		},
 		REF(Types.REF) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				throw new UnsupportedOperationException("Not yet implemented.");
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				throw new UnsupportedOperationException("Not yet implemented.");
+			}
 		},
 		DATALINK(Types.DATALINK) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
+				throw new UnsupportedOperationException("Not yet implemented.");
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
 				throw new UnsupportedOperationException("Not yet implemented.");
 			}
 		},
@@ -358,6 +547,11 @@ public class DefaultParameterHandler implements ParameterHandler {
 				}
 				context.getStatement().setBoolean(context.getIndex(), value);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getBoolean(context.getIndex());
+			}
 		},
 
 		/* JDBC 4.0 Types */
@@ -367,11 +561,21 @@ public class DefaultParameterHandler implements ParameterHandler {
 			public void setParameter(ParameterContext context) throws SQLException {
 				throw new UnsupportedOperationException("Not yet implemented.");
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				throw new UnsupportedOperationException("Not yet implemented.");
+			}
 		},
 		NCHAR(Types.NCHAR) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.CHAR.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.CHAR.getParameter(context);
 			}
 		},
 		NVARCHAR(Types.NVARCHAR) {
@@ -379,11 +583,21 @@ public class DefaultParameterHandler implements ParameterHandler {
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.CHAR.setParameter(context);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.CHAR.getParameter(context);
+			}
 		},
 		LONGNVARCHAR(Types.LONGNVARCHAR) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.LONGVARCHAR.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.LONGVARCHAR.getParameter(context);
 			}
 		},
 		NCLOB(Types.NCLOB) {
@@ -391,10 +605,20 @@ public class DefaultParameterHandler implements ParameterHandler {
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.LONGVARCHAR.setParameter(context);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.LONGVARCHAR.getParameter(context);
+			}
 		},
 		SQLXML(Types.SQLXML) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
+				throw new UnsupportedOperationException("Not yet implemented.");
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
 				throw new UnsupportedOperationException("Not yet implemented.");
 			}
 		},
@@ -406,17 +630,32 @@ public class DefaultParameterHandler implements ParameterHandler {
 			public void setParameter(ParameterContext context) throws SQLException {
 				throw new UnsupportedOperationException("Not yet implemented.");
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return ((CallableStatement) context.getStatement()).getObject(context.getIndex());
+			}
 		},
 		TIME_WITH_TIMEZONE(Types.TIME_WITH_TIMEZONE) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.TIME.setParameter(context);
 			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.TIME.getParameter(context);
+			}
 		},
 		TIMESTAMP_WITH_TIMEZONE(Types.TIMESTAMP_WITH_TIMEZONE) {
 			@Override
 			public void setParameter(ParameterContext context) throws SQLException {
 				Handler.TIMESTAMP.setParameter(context);
+			}
+
+			@Override
+			public Object getParameter(ParameterContext context) throws SQLException {
+				return Handler.TIMESTAMP.getParameter(context);
 			}
 		};
 
@@ -427,6 +666,8 @@ public class DefaultParameterHandler implements ParameterHandler {
 		}
 
 		protected abstract void setParameter(ParameterContext context) throws SQLException;
+
+		protected abstract Object getParameter(ParameterContext context) throws SQLException;
 	}
 
 }

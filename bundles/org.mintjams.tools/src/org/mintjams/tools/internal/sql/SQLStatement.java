@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2021 MintJams Inc.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,6 +24,7 @@ package org.mintjams.tools.internal.sql;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.JDBCType;
 import java.sql.ParameterMetaData;
@@ -50,16 +51,19 @@ public class SQLStatement implements Closeable, Adaptable {
 
 	private final String fSource;
 	private final Map<String, Object> fVariableMap = new HashMap<>();
+	private final boolean fCallable;
 	private final Connection fConnection;
 	private StringBuilder fSQL = new StringBuilder();
 	private List<SQLVariable> fSQLVariableList = new ArrayList<>();
 	private ParameterHandler fParameterHandler;
 	private final Closer fCloser = Closer.create();
 	private PreparedStatement fPreparedStatement;
+	private final List<ParameterContext> fOutParameterList = new ArrayList<>();
 
 	private SQLStatement(Builder builder) {
 		fSource = builder.fSource;
 		fVariableMap.putAll(builder.fVariableMap);
+		fCallable = builder.fCallable;
 		fConnection = builder.fConnection;
 		fParameterHandler = builder.fParameterHandler;
 		if (fParameterHandler == null) {
@@ -115,7 +119,11 @@ public class SQLStatement implements Closeable, Adaptable {
 		}
 
 		compile();
-		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString()));
+		if (fCallable) {
+			fPreparedStatement = fCloser.register(fConnection.prepareCall(fSQL.toString()));
+		} else {
+			fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString()));
+		}
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -126,7 +134,11 @@ public class SQLStatement implements Closeable, Adaptable {
 		}
 
 		compile();
-		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency));
+		if (fCallable) {
+			fPreparedStatement = fCloser.register(fConnection.prepareCall(fSQL.toString(), resultSetType, resultSetConcurrency));
+		} else {
+			fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency));
+		}
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -137,7 +149,11 @@ public class SQLStatement implements Closeable, Adaptable {
 		}
 
 		compile();
-		fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability));
+		if (fCallable) {
+			fPreparedStatement = fCloser.register(fConnection.prepareCall(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability));
+		} else {
+			fPreparedStatement = fCloser.register(fConnection.prepareStatement(fSQL.toString(), resultSetType, resultSetConcurrency, resultSetHoldability));
+		}
 		bind(fPreparedStatement);
 		return fPreparedStatement;
 	}
@@ -145,8 +161,29 @@ public class SQLStatement implements Closeable, Adaptable {
 	private void bind(PreparedStatement preparedStatement) throws SQLException {
 		ParameterMetaData metadata = preparedStatement.getParameterMetaData();
 		for (SQLVariable variable : fSQLVariableList) {
-			fParameterHandler.setParameter(new ParameterContextImpl(variable, preparedStatement, metadata));
+			ParameterContextImpl pc = new ParameterContextImpl(variable, preparedStatement, metadata);
+			if (fCallable) {
+				int mode = pc.getParameterMode();
+
+				if (mode == ParameterMetaData.parameterModeOut || mode == ParameterMetaData.parameterModeInOut) {
+					fOutParameterList.add(pc);
+				}
+
+				if (!(mode == ParameterMetaData.parameterModeIn || mode == ParameterMetaData.parameterModeInOut)) {
+					continue;
+				}
+			}
+
+			fParameterHandler.setParameter(pc);
 		}
+	}
+
+	public boolean hasOutParameters() {
+		return !fOutParameterList.isEmpty();
+	}
+
+	public List<ParameterContext> listOutParameters() {
+		return Collections.unmodifiableList(fOutParameterList);
 	}
 
 	@Override
@@ -160,8 +197,12 @@ public class SQLStatement implements Closeable, Adaptable {
 	public <AdapterType> AdapterType adaptTo(Class<AdapterType> adapterType) {
 		Objects.requireNonNull(adapterType);
 
-		if (adapterType.equals(Statement.class) || adapterType.equals(PreparedStatement.class)) {
+		if (adapterType.equals(Statement.class) || adapterType.equals(PreparedStatement.class) || adapterType.equals(CallableStatement.class)) {
 			return (AdapterType) fPreparedStatement;
+		}
+
+		if (adapterType.equals(ParameterHandler.class)) {
+			return (AdapterType) fParameterHandler;
 		}
 
 		return null;
@@ -191,6 +232,12 @@ public class SQLStatement implements Closeable, Adaptable {
 		}
 		public Builder setVariable(String key, Object value) {
 			fVariableMap.put(key, value);
+			return this;
+		}
+
+		private boolean fCallable;
+		public Builder setCallable(boolean callable) {
+			fCallable = callable;
 			return this;
 		}
 
@@ -349,6 +396,14 @@ public class SQLStatement implements Closeable, Adaptable {
 		@Override
 		public Map<String, String> getOptions() {
 			return fVariable.getOptionsAsMap();
+		}
+
+		@Override
+		public int getParameterMode() {
+			try {
+				return fMetadata.getParameterMode(fVariable.getParameterIndex());
+			} catch (Throwable ex) {}
+			return ParameterMetaData.parameterModeUnknown;
 		}
 
 		@Override
