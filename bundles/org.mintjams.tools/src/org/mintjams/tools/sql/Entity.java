@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -371,11 +372,16 @@ public class Entity {
 				sql.append(" AND ");
 			}
 			sql.append(info.getName());
-			if ((Objects.isNull(cnds) ? variables : cnds).get(varName) == null) {
+			Object value = (Objects.isNull(cnds) ? variables : cnds).get(varName);
+			if (value == null) {
 				sql.append(" IS NULL");
 			} else {
 				String cndName = !Objects.isNull(cnds) ? ("@cnd@" + varName) : varName;
-				sql.append(" = ").append("{{").append(cndName).append("}}");
+				if (value instanceof Collection || value.getClass().isArray()) {
+					sql.append(" IN (").append("{{").append(cndName).append(";list}}").append(")");
+				} else {
+					sql.append(" = ").append("{{").append(cndName).append("}}");
+				}
 				if (!Objects.isNull(cnds)) {
 					variables.put(cndName, cnds.get(varName));
 				}

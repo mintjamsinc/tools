@@ -54,6 +54,7 @@ public class Query {
 	private String fCursorName;
 	private Integer fFetchDirection;
 	private Integer fFetchSize;
+	private Integer fQueryTimeout;
 
 	private Query(Builder builder) {
 		fStatement = builder.fStatement;
@@ -98,6 +99,11 @@ public class Query {
 		return this;
 	}
 
+	public Query setQueryTimeout(int seconds) throws SQLException {
+		fQueryTimeout = seconds;
+		return this;
+	}
+
 	public Result execute() throws SQLException {
 		SQLStatement stmt = null;
 		ResultSet rs = null;
@@ -115,6 +121,7 @@ public class Query {
 				p.setFetchDirection(fFetchDirection);
 			}
 			p.setFetchSize((fFetchSize != null) ? fFetchSize : 1000);
+			p.setQueryTimeout((fQueryTimeout != null) ? fQueryTimeout : 30);
 
 			rs = p.executeQuery();
 		} catch (Throwable ex) {

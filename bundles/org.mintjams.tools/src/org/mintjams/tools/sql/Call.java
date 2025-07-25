@@ -56,6 +56,7 @@ public class Call {
 	private String fCursorName;
 	private Integer fFetchDirection;
 	private Integer fFetchSize;
+	private Integer fQueryTimeout;
 
 	private Call(Builder builder) {
 		fStatement = builder.fStatement;
@@ -101,6 +102,11 @@ public class Call {
 		return this;
 	}
 
+	public Call setQueryTimeout(int seconds) throws SQLException {
+		fQueryTimeout = seconds;
+		return this;
+	}
+
 	public Result execute() throws SQLException {
 		SQLStatement stmt = null;
 		boolean isResultSet;
@@ -118,6 +124,7 @@ public class Call {
 				p.setFetchDirection(fFetchDirection);
 			}
 			p.setFetchSize((fFetchSize != null) ? fFetchSize : 1000);
+			p.setQueryTimeout((fQueryTimeout != null) ? fQueryTimeout : 30);
 
 			isResultSet = p.execute();
 		} catch (Throwable ex) {
@@ -290,6 +297,11 @@ public class Call {
 						Object value = handler.getParameter(context);
 						if (value instanceof java.sql.ResultSet) {
 							value = fCloser.register(new ResultSetImpl((java.sql.ResultSet) value));
+						}
+						if (value instanceof String) {
+							if (context.getOptions().containsKey("trim")) {
+								value = ((String) value).trim();
+							}
 						}
 						fOutParameters.put(context.getName(), value);
 					} catch (SQLException ex) {

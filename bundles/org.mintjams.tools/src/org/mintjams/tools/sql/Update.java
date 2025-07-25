@@ -24,6 +24,7 @@ package org.mintjams.tools.sql;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,7 @@ public class Update {
 	private final Map<String, Object> fVariables = new HashMap<>();
 	private final Connection fConnection;
 	private final ParameterHandler fParameterHandler;
+	private Integer fQueryTimeout;
 
 	private Update(Builder builder) {
 		fStatement = builder.fStatement;
@@ -54,9 +56,16 @@ public class Update {
 				.build();
 	}
 
+	public Update setQueryTimeout(int seconds) throws SQLException {
+		fQueryTimeout = seconds;
+		return this;
+	}
+
 	public int execute() throws SQLException {
 		try (SQLStatement stmt = prepare()) {
-			return stmt.prepare().executeUpdate();
+			PreparedStatement p = stmt.prepare();
+			p.setQueryTimeout((fQueryTimeout != null) ? fQueryTimeout : 30);
+			return p.executeUpdate();
 		} catch (IOException ex) {
 			throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 		}
@@ -64,7 +73,9 @@ public class Update {
 
 	public long executeLarge() throws SQLException {
 		try (SQLStatement stmt = prepare()) {
-			return stmt.prepare().executeLargeUpdate();
+			PreparedStatement p = stmt.prepare();
+			p.setQueryTimeout((fQueryTimeout != null) ? fQueryTimeout : 30);
+			return p.executeLargeUpdate();
 		} catch (IOException ex) {
 			throw (IllegalStateException) new IllegalStateException(ex.getMessage()).initCause(ex);
 		}

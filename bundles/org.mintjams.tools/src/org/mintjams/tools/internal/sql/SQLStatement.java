@@ -85,7 +85,7 @@ public class SQLStatement implements Closeable, Adaptable {
 			Object value = fVariableMap.get(nameAndOptions[0]);
 			boolean isList = false;
 			for (int i = 1; i < nameAndOptions.length; i++) {
-				if (nameAndOptions[i].equalsIgnoreCase("list")) {
+				if (nameAndOptions[i].trim().equalsIgnoreCase("list")) {
 					isList = true;
 					break;
 				}
@@ -167,6 +167,7 @@ public class SQLStatement implements Closeable, Adaptable {
 
 				if (mode == ParameterMetaData.parameterModeOut || mode == ParameterMetaData.parameterModeInOut) {
 					fOutParameterList.add(pc);
+					((CallableStatement) preparedStatement).registerOutParameter(pc.getIndex(), pc.getType());
 				}
 
 				if (!(mode == ParameterMetaData.parameterModeIn || mode == ParameterMetaData.parameterModeInOut)) {
@@ -400,6 +401,18 @@ public class SQLStatement implements Closeable, Adaptable {
 
 		@Override
 		public int getParameterMode() {
+			if (fVariable.getOptions().has("mode")) {
+				String mode = fVariable.getOptions().get("mode");
+				if ("in".equals(mode.toLowerCase())) {
+					return ParameterMetaData.parameterModeIn;
+				}
+				if ("out".equals(mode.toLowerCase())) {
+					return ParameterMetaData.parameterModeOut;
+				}
+				if ("inout".equals(mode.toLowerCase())) {
+					return ParameterMetaData.parameterModeInOut;
+				}
+			}
 			try {
 				return fMetadata.getParameterMode(fVariable.getParameterIndex());
 			} catch (Throwable ex) {}

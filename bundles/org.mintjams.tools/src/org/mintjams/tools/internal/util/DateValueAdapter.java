@@ -121,6 +121,11 @@ public class DateValueAdapter extends AbstractValueAdapter<java.util.Date> {
 			}
 		}
 
+		Long longValue = Adaptables.getAdapter(value, Long.class);
+		if (longValue != null) {
+			return Dates.asDate(longValue.longValue());
+		}
+
 		try {
 			String stringValue = ValueAdapters.createValueAdapter(fEnv, String.class).adapt(value);
 			try {
