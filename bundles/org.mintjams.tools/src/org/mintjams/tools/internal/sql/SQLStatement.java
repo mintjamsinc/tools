@@ -167,7 +167,11 @@ public class SQLStatement implements Closeable, Adaptable {
 
 				if (mode == ParameterMetaData.parameterModeOut || mode == ParameterMetaData.parameterModeInOut) {
 					fOutParameterList.add(pc);
-					((CallableStatement) preparedStatement).registerOutParameter(pc.getIndex(), pc.getType());
+					if (pc.getOptions().containsKey("typename")) {
+						((CallableStatement) preparedStatement).registerOutParameter(pc.getIndex(), pc.getType(), pc.getOptions().get("typename"));
+					} else {
+						((CallableStatement) preparedStatement).registerOutParameter(pc.getIndex(), pc.getType());
+					}
 				}
 
 				if (!(mode == ParameterMetaData.parameterModeIn || mode == ParameterMetaData.parameterModeInOut)) {
