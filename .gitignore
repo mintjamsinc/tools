@@ -21,10 +21,55 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
-/.project
 
+# ================================
+# Gradle files
+# ================================
+# Gradle cache and temporary files
 .gradle/
 build/
-out/
+bin/
+.gradletasknamecache
+
+# ================================
+# IDE files
+# ================================
+# IntelliJ IDEA
+.idea/
 *.iml
-/.idea/
+*.iws
+*.ipr
+/out/
+/gen/
+!/out/production/
+!/gen/production/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.apt_generated/
+.factorypath
+.metadata/
+/bin/
+/tmp/
+
+# VS Code
+.vscode/
+
+# ================================
+# OS specific files
+# ================================
+.DS_Store
+Thumbs.db
+
+# ================================
+# Temporary and Generated files
+# ================================
+# Mac OS X
+.TemporaryItems
+__MACOSX/
+.svn
+.gitattributes
+*.swp
+*.bak
