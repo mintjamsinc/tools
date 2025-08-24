@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+    id 'biz.aQute.bnd.builder' version '6.4.0'
+}
+
+def javaVer = project.hasProperty('javaVersion') ? project.property('javaVersion').toInteger() : 11
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(javaVer))
+    }
+    sourceCompatibility = javaVer
+    targetCompatibility = javaVer
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.osgi:org.osgi.core:6.0.0'
+    compileOnly 'com.sun.mail:javax.mail:1.6.2'
+    compileOnly 'com.sun.activation:javax.activation:1.2.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType(Javadoc) {
+    options.with {
+        encoding = "UTF-8"
+        charSet = "UTF-8"
+        docEncoding = "UTF-8"
+    }
+}
+
+def bndProps = {
+    def props = new Properties()
+    def f = project.file("bnd.bnd")
+    if (f.exists()) {
+        f.withReader("UTF-8") { reader ->
+            props.load(reader)
+        }
+    }
+    return props
+}()
+
+tasks.named('jar', Jar) {
+    doFirst {
+        def props = bndProps
+        def bsn = props.getProperty('Bundle-SymbolicName')?.trim()
+        def ver = props.getProperty('Bundle-Version')?.trim()
+        archiveFileName.set("${bsn}_${ver}.jar")
+    }
+}
