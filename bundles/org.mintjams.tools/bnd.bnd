@@ -1,7 +1,7 @@
 Bundle-Name: %Plugin.name
 Bundle-Vendor: %Plugin.provider
 Bundle-SymbolicName: org.mintjams.tools
-Bundle-Version: 2.1.1
+Bundle-Version: 2.1.2
 
 Export-Package: org.mintjams.tools.adapter;version="2.0.0", \
  org.mintjams.tools.collections;version="2.0.0", \
