@@ -31,14 +31,15 @@ test {
 }
 
 tasks.withType(JavaCompile) {
-    options.encoding = "UTF-8"
+    options.encoding = 'UTF-8'
 }
 
 tasks.withType(Javadoc) {
+    classpath = sourceSets.main.compileClasspath
     options.with {
-        encoding = "UTF-8"
-        charSet = "UTF-8"
-        docEncoding = "UTF-8"
+        encoding = 'UTF-8'
+        charSet = 'UTF-8'
+        docEncoding = 'UTF-8'
     }
 }
 
@@ -46,7 +47,7 @@ def bndProps = {
     def props = new Properties()
     def f = project.file("bnd.bnd")
     if (f.exists()) {
-        f.withReader("UTF-8") { reader ->
+        f.withReader('UTF-8') { reader ->
             props.load(reader)
         }
     }
