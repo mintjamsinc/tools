@@ -112,6 +112,7 @@ public class Tracker<ServiceType> implements Closeable {
 			ServiceReference<ServiceType>[] references = fServiceTracker.getServiceReferences();
 			if (references != null) {
 				for (ServiceReference<ServiceType> reference : references) {
+                    fServices.remove(reference);
 					try {
 						fBundleContext.ungetService(reference);
 					} catch (Throwable ignore) {}
